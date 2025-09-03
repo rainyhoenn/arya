@@ -104,17 +104,34 @@ export default function BillingPage() {
     fetchConrodAssemblies()
   }, [])
 
+  // Filter conrod assemblies to only show those with quantity > 0
   const availableProducts = conrodAssemblies.filter(item => item.quantity > 0)
 
   const handleAddProduct = () => {
     if (!selectedProduct || !quantity || !amountPerUnit) {
+      alert("Please fill in all product fields (Product, Quantity, Amount per Unit)")
       return
     }
 
     const product = availableProducts.find(p => p.id.toString() === selectedProduct)
-    if (!product) return
+    if (!product) {
+      alert(`Product not found! Selected ID: ${selectedProduct}`)
+      return
+    }
 
     const requestedQuantity = parseInt(quantity)
+    const parsedAmount = parseFloat(amountPerUnit)
+
+    // Validate parsed values
+    if (isNaN(requestedQuantity) || requestedQuantity <= 0) {
+      alert("Please enter a valid quantity (positive number)")
+      return
+    }
+
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert("Please enter a valid amount per unit (positive number)")
+      return
+    }
 
     // Check if requested quantity exceeds available stock
     if (requestedQuantity > product.quantity) {
@@ -137,7 +154,7 @@ export default function BillingPage() {
       productId: product.id,
       productName: product.name,
       quantity: requestedQuantity,
-      amountPerUnit: parseFloat(amountPerUnit)
+      amountPerUnit: parsedAmount
     }
 
     setProducts([...products, newProduct])
@@ -157,8 +174,18 @@ export default function BillingPage() {
   }
 
   const handleCreateBill = async () => {
-    if (!invoiceNo || !selectedCustomer || products.length === 0) {
-      alert("Please fill in all required fields and add at least one product")
+    if (!invoiceNo) {
+      alert("Please enter an invoice number")
+      return
+    }
+
+    if (!selectedCustomer) {
+      alert("Please select a customer")
+      return
+    }
+
+    if (products.length === 0) {
+      alert("Please add at least one product to the invoice")
       return
     }
 
@@ -238,6 +265,7 @@ export default function BillingPage() {
                         {error}
                       </div>
                     )}
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="invoiceNo">Invoice No</Label>
