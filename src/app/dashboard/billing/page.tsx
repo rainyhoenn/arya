@@ -1,327 +1,240 @@
 "use client"
 
 import * as React from "react"
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-export type InvoiceItem = {
+type Customer = {
   id: number
-  invoiceId: number
+  name: string
+  address: string
+  email?: string
+  phone?: string
+}
+
+type ConrodAssemblyItem = {
+  id: number
+  name: string
+  type: string
+  size?: string
+  variant?: string
+  quantity: number
+  dateUpdated: string
+  createdAt: string
+}
+
+type ProductItem = {
+  id: string
   productId: number
   productName: string
   quantity: number
   amountPerUnit: number
-  totalAmount: number
 }
-
-export type Invoice = {
-  id: number
-  invoiceNo: string
-  customerId: number
-  customerName: string
-  totalAmount: number
-  status: 'draft' | 'paid' | 'cancelled'
-  createdAt: string
-  items?: InvoiceItem[]
-}
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-  }).format(amount)
-}
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-IN', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-const getColumns = (
-  handleEditItem: (invoice: Invoice) => void,
-  handleDeleteItem: (id: number) => void
-): ColumnDef<Invoice>[] => [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "invoiceNo",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Invoice No
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className="font-medium">{row.getValue("invoiceNo")}</div>,
-  },
-  {
-    accessorKey: "customerName",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Customer Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className="font-medium">{row.getValue("customerName")}</div>,
-  },
-  {
-    id: "products",
-    header: "Products & Quantity",
-    cell: ({ row }) => {
-      const invoice = row.original
-      return (
-        <div className="max-w-xs">
-          {invoice.items && invoice.items.length > 0 ? (
-            <div className="space-y-1">
-              {invoice.items.map((item, index) => (
-                <div key={index} className="text-sm">
-                  <div className="font-medium truncate" title={item.productName}>
-                    {item.productName}
-                  </div>
-                  <div className="text-muted-foreground">
-                    Qty: {item.quantity} × {formatCurrency(item.amountPerUnit)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-muted-foreground text-sm">No items</div>
-          )}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "totalAmount",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Total Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("totalAmount"))
-      return <div className="font-medium">{formatCurrency(amount)}</div>
-    },
-  },
-  {
-    accessorKey: "createdAt",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => {
-      const date = row.getValue("createdAt") as string
-      return <div>{formatDate(date)}</div>
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const invoice = row.original
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => handleEditItem(invoice)}>
-              Edit invoice
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-destructive"
-              onClick={() => handleDeleteItem(invoice.id)}
-            >
-              Delete invoice
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
 
 export default function BillingPage() {
-  const [data, setData] = React.useState<Invoice[]>([])
-  const [isLoading, setIsLoading] = React.useState(true)
+  const [invoiceNo, setInvoiceNo] = React.useState("")
+  const [selectedCustomer, setSelectedCustomer] = React.useState("")
+  const [products, setProducts] = React.useState<ProductItem[]>([])
+  const [selectedProduct, setSelectedProduct] = React.useState("")
+  const [quantity, setQuantity] = React.useState("")
+  const [amountPerUnit, setAmountPerUnit] = React.useState("")
+  const [customers, setCustomers] = React.useState<Customer[]>([])
+  const [conrodAssemblies, setConrodAssemblies] = React.useState<ConrodAssemblyItem[]>([])
+  const [isLoadingCustomers, setIsLoadingCustomers] = React.useState(true)
+  const [isLoadingProducts, setIsLoadingProducts] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
 
-  const fetchInvoices = async () => {
+  // Fetch customers from API
+  const fetchCustomers = async () => {
     try {
-      setIsLoading(true)
-      setError(null)
-      const response = await fetch("/api/invoices")
+      setIsLoadingCustomers(true)
+      const response = await fetch("/api/customers")
       const result = await response.json()
       
       if (!result.success) {
-        throw new Error(result.error || "Failed to fetch invoices")
+        throw new Error(result.error || "Failed to fetch customers")
       }
       
-      // Fetch invoice items for each invoice
-      const invoicesWithItems = await Promise.all(
-        result.data.map(async (invoice: Invoice) => {
-          try {
-            const itemsResponse = await fetch(`/api/invoices/${invoice.id}`)
-            const itemsResult = await itemsResponse.json()
-            
-            if (itemsResult.success && itemsResult.data.items) {
-              return { ...invoice, items: itemsResult.data.items }
-            }
-            return invoice
-          } catch (error) {
-            console.error(`Failed to fetch items for invoice ${invoice.id}:`, error)
-            return invoice
-          }
-        })
-      )
-      
-      setData(invoicesWithItems)
+      setCustomers(result.data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch invoices")
+      setError(err instanceof Error ? err.message : "Failed to fetch customers")
     } finally {
-      setIsLoading(false)
+      setIsLoadingCustomers(false)
     }
   }
 
-  const handleEditItem = (invoice: Invoice) => {
-    console.log("Edit invoice:", invoice)
-    // TODO: Implement edit functionality
-  }
-
-  const handleDeleteItem = async (invoiceId: number) => {
+  // Fetch conrod assemblies from API
+  const fetchConrodAssemblies = async () => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
-        method: "DELETE",
-      })
-      
+      setIsLoadingProducts(true)
+      const response = await fetch("/api/conrod-assemblies")
       const result = await response.json()
       
       if (!result.success) {
-        throw new Error(result.error || "Failed to delete invoice")
+        throw new Error(result.error || "Failed to fetch products")
       }
       
-      fetchInvoices()
+      setConrodAssemblies(result.data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete invoice")
+      setError(err instanceof Error ? err.message : "Failed to fetch products")
+    } finally {
+      setIsLoadingProducts(false)
     }
   }
 
   React.useEffect(() => {
-    fetchInvoices()
+    fetchCustomers()
+    fetchConrodAssemblies()
   }, [])
 
-  const columns = getColumns(handleEditItem, handleDeleteItem)
+  // Filter conrod assemblies to only show those with quantity > 0
+  const availableProducts = conrodAssemblies.filter(item => item.quantity > 0)
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  })
+  const handleAddProduct = () => {
+    if (!selectedProduct || !quantity || !amountPerUnit) {
+      alert("Please fill in all product fields (Product, Quantity, Amount per Unit)")
+      return
+    }
+
+    const product = availableProducts.find(p => p.id.toString() === selectedProduct)
+    if (!product) {
+      alert(`Product not found! Selected ID: ${selectedProduct}`)
+      return
+    }
+
+    const requestedQuantity = parseInt(quantity)
+    const parsedAmount = parseFloat(amountPerUnit)
+
+    // Validate parsed values
+    if (isNaN(requestedQuantity) || requestedQuantity <= 0) {
+      alert("Please enter a valid quantity (positive number)")
+      return
+    }
+
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert("Please enter a valid amount per unit (positive number)")
+      return
+    }
+
+    // Check if requested quantity exceeds available stock
+    if (requestedQuantity > product.quantity) {
+      alert(`Cannot add ${requestedQuantity} units. Available stock: ${product.quantity}`)
+      return
+    }
+
+    // Check if this product is already added and total would exceed stock
+    const existingProduct = products.find(p => p.productId === product.id)
+    const totalQuantity = existingProduct ? existingProduct.quantity + requestedQuantity : requestedQuantity
+    
+    if (totalQuantity > product.quantity) {
+      const remainingStock = product.quantity - (existingProduct?.quantity || 0)
+      alert(`Cannot add ${requestedQuantity} more units. You can add up to ${remainingStock} more units (${product.quantity} total stock, ${existingProduct?.quantity || 0} already added)`)
+      return
+    }
+
+    const newProduct: ProductItem = {
+      id: Date.now().toString(),
+      productId: product.id,
+      productName: product.name,
+      quantity: requestedQuantity,
+      amountPerUnit: parsedAmount
+    }
+
+    setProducts([...products, newProduct])
+    setSelectedProduct("")
+    setQuantity("")
+    setAmountPerUnit("")
+  }
+
+  const handleRemoveProduct = (productId: string) => {
+    setProducts(products.filter(p => p.id !== productId))
+  }
+
+  const calculateTotal = () => {
+    return products.reduce((total, product) => {
+      return total + (product.quantity * product.amountPerUnit)
+    }, 0).toFixed(2)
+  }
+
+  const handleCreateBill = async () => {
+    if (!invoiceNo) {
+      alert("Please enter an invoice number")
+      return
+    }
+
+    if (!selectedCustomer) {
+      alert("Please select a customer")
+      return
+    }
+
+    if (products.length === 0) {
+      alert("Please add at least one product to the invoice")
+      return
+    }
+
+    try {
+      const response = await fetch("/api/invoices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          invoiceNo,
+          customerId: selectedCustomer,
+          products: products.map(p => ({
+            productId: p.productId,
+            productName: p.productName,
+            quantity: p.quantity,
+            amountPerUnit: p.amountPerUnit
+          }))
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create invoice")
+      }
+
+      // Show success message with inventory deductions
+      let successMessage = "Invoice created successfully!"
+      if (result.inventoryDeductions && result.inventoryDeductions.length > 0) {
+        successMessage += "\n\nInventory deducted:"
+        result.inventoryDeductions.forEach((deduction: any) => {
+          successMessage += `\n• ${deduction.productName}: -${deduction.quantityDeducted} (Remaining: ${deduction.remainingQuantity})`
+        })
+      }
+      alert(successMessage)
+      
+      // Reset form
+      setInvoiceNo("")
+      setSelectedCustomer("")
+      setProducts([])
+      
+      // Refresh product data to update stock levels
+      fetchConrodAssemblies()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create invoice")
+      alert(`Error: ${err instanceof Error ? err.message : "Failed to create invoice"}`)
+    }
+  }
 
   return (
     <SidebarProvider
@@ -334,144 +247,148 @@ export default function BillingPage() {
     >
       <AppSidebar variant="inset" />
       <SidebarInset>
-        <SiteHeader title="Billing History" />
+        <SiteHeader title="Create Invoice" />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="px-4 lg:px-6">
-                
-                <div className="w-full space-y-4 py-4">
-                  <div className="flex items-center justify-between">
-                    <Input
-                      placeholder="Filter invoices..."
-                      value={(table.getColumn("invoiceNo")?.getFilterValue() as string) ?? ""}
-                      onChange={(event) =>
-                        table.getColumn("invoiceNo")?.setFilterValue(event.target.value)
-                      }
-                      className="max-w-sm"
-                    />
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                          Columns <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {table
-                          .getAllColumns()
-                          .filter((column) => column.getCanHide())
-                          .map((column) => {
-                            return (
-                              <DropdownMenuCheckboxItem
-                                key={column.id}
-                                className="capitalize"
-                                checked={column.getIsVisible()}
-                                onCheckedChange={(value) =>
-                                  column.toggleVisibility(!!value)
-                                }
-                              >
-                                {column.id}
-                              </DropdownMenuCheckboxItem>
-                            )
-                          })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                          <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => {
-                              return (
-                                <TableHead key={header.id}>
-                                  {header.isPlaceholder
-                                    ? null
-                                    : flexRender(
-                                        header.column.columnDef.header,
-                                        header.getContext()
-                                      )}
-                                </TableHead>
-                              )
-                            })}
-                          </TableRow>
-                        ))}
-                      </TableHeader>
-                      <TableBody>
-                        {isLoading ? (
-                          <TableRow>
-                            <TableCell
-                              colSpan={columns.length}
-                              className="h-24 text-center"
-                            >
-                              Loading invoices...
-                            </TableCell>
-                          </TableRow>
-                        ) : error ? (
-                          <TableRow>
-                            <TableCell
-                              colSpan={columns.length}
-                              className="h-24 text-center text-destructive"
-                            >
-                              Error: {error}
-                            </TableCell>
-                          </TableRow>
-                        ) : table.getRowModel().rows?.length ? (
-                          table.getRowModel().rows.map((row) => (
-                            <TableRow
-                              key={row.id}
-                              data-state={row.getIsSelected() && "selected"}
-                            >
-                              {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id}>
-                                  {flexRender(
-                                    cell.column.columnDef.cell,
-                                    cell.getContext()
-                                  )}
-                                </TableCell>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Invoice Details</CardTitle>
+                    <CardDescription>
+                      Create a new invoice for customer billing
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {error && (
+                      <div className="p-4 border border-red-200 bg-red-50 rounded-lg text-red-700">
+                        {error}
+                      </div>
+                    )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="invoiceNo">Invoice No</Label>
+                        <Input
+                          id="invoiceNo"
+                          placeholder="INV-001"
+                          value={invoiceNo}
+                          onChange={(e) => setInvoiceNo(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="customer">Customer</Label>
+                        <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={isLoadingCustomers ? "Loading customers..." : "Select a customer"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {customers.map((customer) => (
+                              <SelectItem key={customer.id} value={customer.id.toString()}>
+                                {customer.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Add Products</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="product">Product</Label>
+                          <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                            <SelectTrigger>
+                              <SelectValue placeholder={isLoadingProducts ? "Loading products..." : "Select product"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableProducts.map((product) => (
+                                <SelectItem key={product.id} value={product.id.toString()}>
+                                  {product.name} (Stock: {product.quantity})
+                                </SelectItem>
                               ))}
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell
-                              colSpan={columns.length}
-                              className="h-24 text-center"
-                            >
-                              No invoices found.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  
-                  <div className="flex items-center justify-end space-x-2 py-4">
-                    <div className="flex-1 text-sm text-muted-foreground">
-                      {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                      {table.getFilteredRowModel().rows.length} row(s) selected.
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="quantity">Quantity</Label>
+                          <Input
+                            id="quantity"
+                            type="number"
+                            placeholder="1"
+                            min="1"
+                            max={selectedProduct ? availableProducts.find(p => p.id.toString() === selectedProduct)?.quantity : undefined}
+                            value={quantity}
+                            onChange={(e) => setQuantity(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="amount">Amount per Unit</Label>
+                          <Input
+                            id="amount"
+                            type="number"
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                            value={amountPerUnit}
+                            onChange={(e) => setAmountPerUnit(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button onClick={handleAddProduct} className="w-full">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Product
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                      >
-                        Previous
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                      >
-                        Next
+
+                    {products.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Products Added</h3>
+                        <div className="border rounded-lg">
+                          <div className="grid grid-cols-5 gap-4 p-4 font-medium border-b bg-muted/50">
+                            <div>Product</div>
+                            <div>Quantity</div>
+                            <div>Amount/Unit</div>
+                            <div>Total</div>
+                            <div>Action</div>
+                          </div>
+                          {products.map((product) => (
+                            <div key={product.id} className="grid grid-cols-5 gap-4 p-4 border-b last:border-b-0">
+                              <div>{product.productName}</div>
+                              <div>{product.quantity}</div>
+                              <div>₹{product.amountPerUnit.toFixed(2)}</div>
+                              <div>₹{(product.quantity * product.amountPerUnit).toFixed(2)}</div>
+                              <div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRemoveProduct(product.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="p-4 bg-muted/50">
+                            <div className="flex justify-between items-center font-medium">
+                              <span>Total Amount:</span>
+                              <span className="text-lg">₹{calculateTotal()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end">
+                      <Button onClick={handleCreateBill} size="lg">
+                        Create Bill
                       </Button>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
