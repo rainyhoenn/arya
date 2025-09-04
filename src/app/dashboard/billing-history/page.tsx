@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Eye } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Printer } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -43,6 +43,12 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 
+export type InvoiceItem = {
+  id: number
+  productName: string
+  quantity: number
+}
+
 export type Invoice = {
   id: number
   invoiceNo: string
@@ -51,12 +57,12 @@ export type Invoice = {
   totalAmount: number
   status: 'draft' | 'paid' | 'cancelled'
   createdAt: string
+  items?: InvoiceItem[]
 }
 
 const getColumns = (
-  handleViewInvoice: (invoice: Invoice) => void,
-  handleUpdateStatus: (id: number, status: Invoice['status']) => void,
-  handleDeleteInvoice: (id: number) => void
+  handlePrintInvoice: (invoice: Invoice) => void,
+  handlePrintBill: (invoice: Invoice) => void
 ): ColumnDef<Invoice>[] => [
   {
     id: "select",
@@ -105,7 +111,7 @@ const getColumns = (
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Customer
+          Customer Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
@@ -113,6 +119,26 @@ const getColumns = (
     cell: ({ row }) => (
       <div>{row.getValue("customerName")}</div>
     ),
+  },
+  {
+    id: "products",
+    header: "Products & Quantity",
+    cell: ({ row }) => {
+      const invoice = row.original
+      if (!invoice.items || invoice.items.length === 0) {
+        return <div className="text-muted-foreground">No items</div>
+      }
+      return (
+        <div className="space-y-1">
+          {invoice.items.map((item, index) => (
+            <div key={item.id || index} className="text-sm">
+              <div className="font-medium">{item.productName}</div>
+              <div className="text-muted-foreground">Qty: {item.quantity}</div>
+            </div>
+          ))}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "totalAmount",
@@ -131,45 +157,8 @@ const getColumns = (
       const amount = parseFloat(row.getValue("totalAmount"))
       return (
         <div className="text-right font-medium">
-          ${amount.toFixed(2)}
+          ₹{amount.toFixed(2)}
         </div>
-      )
-    },
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => {
-      const status = row.getValue("status") as string
-      return (
-        <Badge
-          variant={
-            status === "paid"
-              ? "default"
-              : status === "cancelled"
-              ? "destructive"
-              : "secondary"
-          }
-          className={
-            status === "paid"
-              ? "bg-green-500 hover:bg-green-600"
-              : status === "cancelled"
-              ? ""
-              : ""
-          }
-        >
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </Badge>
       )
     },
   },
@@ -181,7 +170,7 @@ const getColumns = (
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Created Date
+          Date
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
@@ -207,38 +196,13 @@ const getColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(invoice.invoiceNo)}
-            >
-              Copy invoice number
+            <DropdownMenuItem onClick={() => handlePrintInvoice(invoice)}>
+              <Printer className="mr-2 h-4 w-4" />
+              Print Invoice
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleViewInvoice(invoice)}>
-              <Eye className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            {invoice.status === "draft" && (
-              <>
-                <DropdownMenuItem 
-                  onClick={() => handleUpdateStatus(invoice.id, "paid")}
-                  className="text-green-600"
-                >
-                  Mark as Paid
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => handleUpdateStatus(invoice.id, "cancelled")}
-                  className="text-orange-600"
-                >
-                  Cancel Invoice
-                </DropdownMenuItem>
-              </>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="text-destructive"
-              onClick={() => handleDeleteInvoice(invoice.id)}
-            >
-              Delete Invoice
+            <DropdownMenuItem onClick={() => handlePrintBill(invoice)}>
+              <Printer className="mr-2 h-4 w-4" />
+              Print Bill
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -275,65 +239,23 @@ export default function BillingHistoryPage() {
     }
   }
 
-  const handleViewInvoice = (invoice: Invoice) => {
-    // TODO: Implement invoice detail view modal or navigation
-    console.log("View invoice:", invoice)
-    alert(`Viewing invoice ${invoice.invoiceNo} for ${invoice.customerName}`)
+  const handlePrintInvoice = (invoice: Invoice) => {
+    // TODO: Implement invoice printing functionality
+    console.log("Print invoice:", invoice)
+    alert(`Printing invoice ${invoice.invoiceNo} for ${invoice.customerName}`)
   }
 
-  const handleUpdateStatus = async (invoiceId: number, newStatus: Invoice['status']) => {
-    try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: newStatus
-        }),
-      })
-      
-      const result = await response.json()
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to update invoice status")
-      }
-      
-      // Refresh the data
-      fetchInvoices()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update invoice status")
-    }
-  }
-
-  const handleDeleteInvoice = async (invoiceId: number) => {
-    if (!confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
-        method: "DELETE",
-      })
-      
-      const result = await response.json()
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to delete invoice")
-      }
-      
-      // Refresh the data
-      fetchInvoices()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete invoice")
-    }
+  const handlePrintBill = (invoice: Invoice) => {
+    // TODO: Implement bill printing functionality
+    console.log("Print bill:", invoice)
+    alert(`Printing bill ${invoice.invoiceNo} for ${invoice.customerName}`)
   }
 
   React.useEffect(() => {
     fetchInvoices()
   }, [])
 
-  const columns = getColumns(handleViewInvoice, handleUpdateStatus, handleDeleteInvoice)
+  const columns = getColumns(handlePrintInvoice, handlePrintBill)
 
   const table = useReactTable({
     data,

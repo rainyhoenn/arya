@@ -520,12 +520,28 @@ class ConrodDatabase {
 
   // Invoice CRUD methods
   getAllInvoices(): (InvoiceRecord & { customerName: string })[] {
-    return this.db.query(`
+    const invoices = this.db.query(`
       SELECT i.*, c.name as customerName 
       FROM invoices i 
       JOIN customers c ON i.customerId = c.id 
       ORDER BY i.createdAt DESC
     `).all() as (InvoiceRecord & { customerName: string })[];
+
+    // For each invoice, get its items
+    const invoicesWithItems = invoices.map(invoice => {
+      const items = this.db.query(`
+        SELECT id, productName, quantity
+        FROM invoice_items 
+        WHERE invoiceId = ?
+      `).all(invoice.id) as Array<{ id: number, productName: string, quantity: number }>;
+      
+      return {
+        ...invoice,
+        items
+      };
+    });
+
+    return invoicesWithItems;
   }
 
   createInvoice(invoice: Omit<InvoiceRecord, "id" | "createdAt">, items: Omit<InvoiceItemRecord, "id" | "invoiceId">[]): InvoiceRecord {

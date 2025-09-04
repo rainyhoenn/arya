@@ -28,6 +28,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import {
   Table,
   TableBody,
   TableCell,
@@ -46,8 +56,6 @@ export type Customer = {
   id: number
   name: string
   address: string
-  email?: string
-  phone?: string
   createdAt?: string
 }
 
@@ -93,12 +101,7 @@ const getColumns = (
     cell: ({ row }) => {
       const customer = row.original
       return (
-        <div>
-          <div className="font-medium">{customer.name}</div>
-          {customer.email && (
-            <div className="text-sm text-muted-foreground">{customer.email}</div>
-          )}
-        </div>
+        <div className="font-medium">{customer.name}</div>
       )
     },
   },
@@ -118,12 +121,7 @@ const getColumns = (
     cell: ({ row }) => {
       const customer = row.original
       return (
-        <div>
-          <div>{customer.address}</div>
-          {customer.phone && (
-            <div className="text-sm text-muted-foreground">{customer.phone}</div>
-          )}
-        </div>
+        <div>{customer.address}</div>
       )
     },
   },
@@ -167,6 +165,12 @@ export default function CustomersPage() {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+  const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [newCustomer, setNewCustomer] = React.useState({
+    name: "",
+    address: "",
+  })
 
   const fetchCustomers = async () => {
     try {
@@ -188,7 +192,43 @@ export default function CustomersPage() {
   }
 
   const handleAddCustomer = () => {
-    fetchCustomers()
+    setIsAddDialogOpen(true)
+  }
+
+  const handleSubmitCustomer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!newCustomer.name.trim() || !newCustomer.address.trim()) {
+      setError("Name and address are required")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setError(null)
+      
+      const response = await fetch("/api/customers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newCustomer),
+      })
+      
+      const result = await response.json()
+      
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create customer")
+      }
+      
+      setNewCustomer({ name: "", address: "" })
+      setIsAddDialogOpen(false)
+      fetchCustomers()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create customer")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleEditItem = (customer: Customer) => {
@@ -253,9 +293,67 @@ export default function CustomersPage() {
         <SiteHeader 
           title="Customers" 
           actions={
-            <Button size="sm" onClick={handleAddCustomer}>
-              Add Customer
-            </Button>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  Add Customer
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Add Customer</DialogTitle>
+                  <DialogDescription>
+                    Add a new customer to your database. Fill in the required information below.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmitCustomer}>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="name" className="text-right">
+                        Name *
+                      </Label>
+                      <Input
+                        id="name"
+                        value={newCustomer.name}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                        className="col-span-3"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="address" className="text-right">
+                        Address *
+                      </Label>
+                      <Input
+                        id="address"
+                        value={newCustomer.address}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                        className="col-span-3"
+                        required
+                      />
+                    </div>
+                    {error && (
+                      <div className="col-span-4 text-sm text-destructive">
+                        {error}
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsAddDialogOpen(false)}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? "Adding..." : "Add Customer"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           }
         />
         <div className="flex flex-1 flex-col">
