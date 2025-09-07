@@ -3,9 +3,10 @@ import { conrodDB } from "@/lib/database";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const customerId = parseInt(params.id);
     const customer = conrodDB.getCustomerById(customerId);
 
@@ -28,14 +29,15 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const customerId = parseInt(params.id);
     const body = await request.json();
 
     // Validate required fields
-    const { name, address, email, phone } = body;
+    const { name, address, phoneNumber, gstNo } = body;
 
     if (!name || !address) {
       return NextResponse.json(
@@ -47,8 +49,8 @@ export async function PUT(
     const updatedCustomer = conrodDB.updateCustomer(customerId, {
       name,
       address,
-      email,
-      phone,
+      phoneNumber,
+      gstNo,
     });
 
     if (!updatedCustomer) {
@@ -70,9 +72,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const customerId = parseInt(params.id);
     const success = conrodDB.deleteCustomer(customerId);
 

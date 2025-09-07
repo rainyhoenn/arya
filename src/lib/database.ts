@@ -14,6 +14,7 @@ export interface ConrodRecord {
   ballBearingName: string;
   ballBearingVariant: string;
   ballBearingSize: string;
+  amount?: number;
   createdAt: string;
 }
 
@@ -32,8 +33,8 @@ export interface CustomerRecord {
   id: number;
   name: string;
   address: string;
-  email?: string;
-  phone?: string;
+  phoneNumber?: string;
+  gstNo?: string;
   createdAt: string;
 }
 
@@ -81,6 +82,7 @@ class ConrodDatabase {
         ballBearingName TEXT NOT NULL,
         ballBearingVariant TEXT NOT NULL,
         ballBearingSize TEXT NOT NULL,
+        amount INTEGER DEFAULT 0,
         createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -108,11 +110,14 @@ class ConrodDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         address TEXT NOT NULL,
-        email TEXT,
-        phone TEXT,
+        phoneNumber TEXT,
+        gstNo TEXT,
         createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Migrate customers table to add new columns
+    this.migrateCustomersTable();
 
     // Create invoices table if it doesn't exist
     this.db.exec(`
@@ -155,6 +160,35 @@ class ConrodDatabase {
     }
   }
 
+  private migrateCustomersTable() {
+    try {
+      // Check if phoneNumber and gstNo columns exist
+      const columns = this.db.query("PRAGMA table_info(customers)").all() as Array<{name: string}>;
+      const columnNames = columns.map(col => col.name);
+      
+      // Add missing columns
+      const columnsToAdd = [
+        { name: 'phoneNumber', sql: 'ALTER TABLE customers ADD COLUMN phoneNumber TEXT' },
+        { name: 'gstNo', sql: 'ALTER TABLE customers ADD COLUMN gstNo TEXT' }
+      ];
+
+      for (const column of columnsToAdd) {
+        if (!columnNames.includes(column.name)) {
+          this.db.exec(column.sql);
+          console.log(`Added column ${column.name} to customers table`);
+        }
+      }
+
+      // Migrate old phone and email columns to phoneNumber if they exist
+      if (columnNames.includes('phone') && !columnNames.includes('phoneNumber')) {
+        this.db.exec('UPDATE customers SET phoneNumber = phone WHERE phone IS NOT NULL');
+        console.log('Migrated phone data to phoneNumber column');
+      }
+    } catch (error) {
+      console.error("Error during customers table migration:", error);
+    }
+  }
+
   private migrateConrodsTable() {
     try {
       // Check if variant and size columns exist by getting table info
@@ -167,7 +201,8 @@ class ConrodDatabase {
         { name: 'conrodSize', sql: 'ALTER TABLE conrods ADD COLUMN conrodSize TEXT' },
         { name: 'pinSize', sql: 'ALTER TABLE conrods ADD COLUMN pinSize TEXT' },
         { name: 'ballBearingVariant', sql: 'ALTER TABLE conrods ADD COLUMN ballBearingVariant TEXT' },
-        { name: 'ballBearingSize', sql: 'ALTER TABLE conrods ADD COLUMN ballBearingSize TEXT' }
+        { name: 'ballBearingSize', sql: 'ALTER TABLE conrods ADD COLUMN ballBearingSize TEXT' },
+        { name: 'amount', sql: 'ALTER TABLE conrods ADD COLUMN amount INTEGER DEFAULT 0' }
       ];
 
       for (const column of columnsToAdd) {
@@ -256,8 +291,8 @@ class ConrodDatabase {
     ];
 
     const insertStmt = this.db.prepare(`
-      INSERT INTO conrods (serialNumber, conrodName, conrodVariant, conrodSize, smallEndDiameter, bigEndDiameter, centerDistance, pinName, pinSize, ballBearingName, ballBearingVariant, ballBearingSize)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO conrods (serialNumber, conrodName, conrodVariant, conrodSize, smallEndDiameter, bigEndDiameter, centerDistance, pinName, pinSize, ballBearingName, ballBearingVariant, ballBearingSize, amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const conrod of initialData) {
@@ -273,7 +308,8 @@ class ConrodDatabase {
         conrod.pinSize,
         conrod.ballBearingName,
         conrod.ballBearingVariant,
-        conrod.ballBearingSize
+        conrod.ballBearingSize,
+        5 // default amount for seed data
       );
     }
   }
@@ -283,37 +319,37 @@ class ConrodDatabase {
       {
         name: "John Smith",
         address: "123 Main St, New York, NY 10001",
-        email: "john.smith@email.com",
-        phone: "(555) 123-4567"
+        phoneNumber: "(555) 123-4567",
+        gstNo: "GST123456789"
       },
       {
         name: "Sarah Johnson",
         address: "456 Oak Ave, Los Angeles, CA 90210",
-        email: "sarah.johnson@email.com",
-        phone: "(555) 987-6543"
+        phoneNumber: "(555) 987-6543",
+        gstNo: "GST987654321"
       },
       {
         name: "Mike Davis",
         address: "789 Pine Rd, Chicago, IL 60601",
-        email: "mike.davis@email.com",
-        phone: "(555) 456-7890"
+        phoneNumber: "(555) 456-7890",
+        gstNo: "GST456789123"
       },
       {
         name: "Emily Wilson",
         address: "321 Elm St, Houston, TX 77001",
-        email: "emily.wilson@email.com",
-        phone: "(555) 234-5678"
+        phoneNumber: "(555) 234-5678",
+        gstNo: "GST234567890"
       },
       {
         name: "David Brown",
         address: "654 Maple Dr, Phoenix, AZ 85001",
-        email: "david.brown@email.com",
-        phone: "(555) 345-6789"
+        phoneNumber: "(555) 345-6789",
+        gstNo: "GST345678901"
       }
     ];
 
     const insertStmt = this.db.prepare(`
-      INSERT INTO customers (name, address, email, phone)
+      INSERT INTO customers (name, address, phoneNumber, gstNo)
       VALUES (?, ?, ?, ?)
     `);
 
@@ -321,8 +357,8 @@ class ConrodDatabase {
       insertStmt.run(
         customer.name,
         customer.address,
-        customer.email,
-        customer.phone
+        customer.phoneNumber,
+        customer.gstNo
       );
     }
   }
@@ -333,8 +369,8 @@ class ConrodDatabase {
 
   createConrod(conrod: Omit<ConrodRecord, "id" | "createdAt">): ConrodRecord {
     const insertStmt = this.db.prepare(`
-      INSERT INTO conrods (serialNumber, conrodName, conrodVariant, conrodSize, smallEndDiameter, bigEndDiameter, centerDistance, pinName, pinSize, ballBearingName, ballBearingVariant, ballBearingSize)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO conrods (serialNumber, conrodName, conrodVariant, conrodSize, smallEndDiameter, bigEndDiameter, centerDistance, pinName, pinSize, ballBearingName, ballBearingVariant, ballBearingSize, amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insertStmt.run(
@@ -349,7 +385,8 @@ class ConrodDatabase {
       conrod.pinSize,
       conrod.ballBearingName,
       conrod.ballBearingVariant,
-      conrod.ballBearingSize
+      conrod.ballBearingSize,
+      conrod.amount || 0
     );
 
     const getStmt = this.db.prepare("SELECT * FROM conrods WHERE id = ?");
@@ -375,23 +412,25 @@ class ConrodDatabase {
         pinSize = COALESCE(?, pinSize),
         ballBearingName = COALESCE(?, ballBearingName),
         ballBearingVariant = COALESCE(?, ballBearingVariant),
-        ballBearingSize = COALESCE(?, ballBearingSize)
+        ballBearingSize = COALESCE(?, ballBearingSize),
+        amount = COALESCE(?, amount)
       WHERE id = ?
     `);
 
     updateStmt.run(
-      conrod.serialNumber,
-      conrod.conrodName,
-      conrod.conrodVariant,
-      conrod.conrodSize,
-      conrod.smallEndDiameter,
-      conrod.bigEndDiameter,
-      conrod.centerDistance,
-      conrod.pinName,
-      conrod.pinSize,
-      conrod.ballBearingName,
-      conrod.ballBearingVariant,
-      conrod.ballBearingSize,
+      conrod.serialNumber ?? null,
+      conrod.conrodName ?? null,
+      conrod.conrodVariant ?? null,
+      conrod.conrodSize ?? null,
+      conrod.smallEndDiameter ?? null,
+      conrod.bigEndDiameter ?? null,
+      conrod.centerDistance ?? null,
+      conrod.pinName ?? null,
+      conrod.pinSize ?? null,
+      conrod.ballBearingName ?? null,
+      conrod.ballBearingVariant ?? null,
+      conrod.ballBearingSize ?? null,
+      conrod.amount ?? null,
       id
     );
 
@@ -446,12 +485,12 @@ class ConrodDatabase {
     `);
 
     updateStmt.run(
-      item.name,
-      item.type,
-      item.size,
-      item.variant,
-      item.quantity,
-      item.dateUpdated,
+      item.name ?? null,
+      item.type ?? null,
+      item.size ?? null,
+      item.variant ?? null,
+      item.quantity ?? null,
+      item.dateUpdated ?? null,
       id
     );
 
@@ -471,15 +510,15 @@ class ConrodDatabase {
 
   createCustomer(customer: Omit<CustomerRecord, "id" | "createdAt">): CustomerRecord {
     const insertStmt = this.db.prepare(`
-      INSERT INTO customers (name, address, email, phone)
+      INSERT INTO customers (name, address, phoneNumber, gstNo)
       VALUES (?, ?, ?, ?)
     `);
 
     const result = insertStmt.run(
       customer.name,
       customer.address,
-      customer.email || null,
-      customer.phone || null
+      customer.phoneNumber || null,
+      customer.gstNo || null
     );
 
     const getStmt = this.db.prepare("SELECT * FROM customers WHERE id = ?");
@@ -496,16 +535,16 @@ class ConrodDatabase {
       UPDATE customers SET 
         name = COALESCE(?, name),
         address = COALESCE(?, address),
-        email = COALESCE(?, email),
-        phone = COALESCE(?, phone)
+        phoneNumber = COALESCE(?, phoneNumber),
+        gstNo = COALESCE(?, gstNo)
       WHERE id = ?
     `);
 
     updateStmt.run(
-      customer.name,
-      customer.address,
-      customer.email,
-      customer.phone,
+      customer.name ?? null,
+      customer.address ?? null,
+      customer.phoneNumber ?? null,
+      customer.gstNo ?? null,
       id
     );
 

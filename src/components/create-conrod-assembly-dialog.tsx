@@ -45,8 +45,8 @@ export function CreateConrodAssemblyDialog({ onCreateAssembly, children }: Creat
     quantity: "",
   })
 
-  const variantOptions = ["Standard", "NRB"]
-  const sizeOptions = ["Standard", "1", "2", "3", "4", "5", "6", "7"]
+  const variantOptions = ["Local", "NRB"]
+  const sizeOptions = ["Std.", "1", "2", "3", "4", "5", "6", "7"]
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -230,7 +230,7 @@ export function CreateConrodAssemblyDialog({ onCreateAssembly, children }: Creat
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Conrod Assembly</DialogTitle>
           <DialogDescription>
@@ -313,37 +313,114 @@ export function CreateConrodAssemblyDialog({ onCreateAssembly, children }: Creat
           )}
 
           {recipe && (
-            <div className="rounded-md border border-blue-200 bg-blue-50 p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                <Label className="text-sm font-medium text-blue-900">Required Components & Inventory</Label>
+            <div className="space-y-4">
+              <div className="border-b border-black pb-2">
+                <h2 className="text-sm font-bold tracking-wide text-black uppercase">
+                  Required Components
+                </h2>
               </div>
               
               {isLoadingInventory ? (
-                <div className="text-sm text-blue-600">Loading inventory...</div>
+                <div className="border border-black bg-white p-4 text-center">
+                  <div className="text-xs font-medium text-gray-500 tracking-wider uppercase">
+                    Loading Inventory...
+                  </div>
+                </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  <div className="space-y-2">
-                    <div className="font-medium text-blue-900">Pin Required:</div>
-                    <div className="text-blue-700">
-                      <div>{recipe.requiredComponents.pin.name}</div>
-                      <div className="text-xs">Size: {recipe.requiredComponents.pin.size}</div>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Pin Component */}
+                  <div className="border border-black bg-white relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-black"></div>
+                    <div className="pl-3 pr-2 py-3">
+                      <div className="mb-3">
+                        <div className="text-xs font-bold tracking-[0.2em] text-gray-500 mb-1">
+                          01 / PIN
+                        </div>
+                        <h3 className="text-xs font-black text-black leading-tight tracking-wide mb-1">
+                          {recipe.requiredComponents.pin.name}
+                        </h3>
+                        <div className="text-xs text-gray-600">
+                          Size {recipe.requiredComponents.pin.size}
+                        </div>
+                      </div>
+                      
                       {inventory && (
-                        <div className={`text-xs font-medium ${inventory.pin.quantity >= requestedQuantity ? 'text-green-600' : 'text-red-600'}`}>
-                          Available: {inventory.pin.quantity} {requestedQuantity > 0 && `(Need: ${requestedQuantity})`}
+                        <div className="space-y-2 pt-2 border-t border-gray-300">
+                          <div className="flex justify-between items-center">
+                            <div className="text-xs font-bold tracking-[0.15em] text-gray-500">
+                              AVAIL
+                            </div>
+                            <div className={`text-sm font-black ${inventory.pin.quantity >= requestedQuantity ? 'text-black' : 'text-gray-400'}`}>
+                              {inventory.pin.quantity}
+                            </div>
+                          </div>
+                          {requestedQuantity > 0 && (
+                            <div className="flex justify-between items-center">
+                              <div className="text-xs font-bold tracking-[0.15em] text-gray-500">
+                                REQ
+                              </div>
+                              <div className="text-sm font-black text-black">
+                                {requestedQuantity}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {inventory.pin.quantity < requestedQuantity && requestedQuantity > 0 && (
+                            <div className="mt-2 pt-2 border-t border-gray-300">
+                              <div className="bg-black text-white px-2 py-1 text-xs font-bold tracking-[0.15em] uppercase">
+                                Short: {requestedQuantity - inventory.pin.quantity}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <div className="font-medium text-blue-900">Ball Bearing Required:</div>
-                    <div className="text-blue-700">
-                      <div>{recipe.requiredComponents.ballBearing.name}</div>
-                      <div className="text-xs">{recipe.requiredComponents.ballBearing.variant}, Size: {recipe.requiredComponents.ballBearing.size}</div>
+
+                  {/* Ball Bearing Component */}
+                  <div className="border border-black bg-white relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-black"></div>
+                    <div className="pl-3 pr-2 py-3">
+                      <div className="mb-3">
+                        <div className="text-xs font-bold tracking-[0.2em] text-gray-500 mb-1">
+                          02 / BEARING
+                        </div>
+                        <h3 className="text-xs font-black text-black leading-tight tracking-wide mb-1">
+                          {recipe.requiredComponents.ballBearing.name}
+                        </h3>
+                        <div className="text-xs text-gray-600">
+                          {recipe.requiredComponents.ballBearing.variant} • Size {recipe.requiredComponents.ballBearing.size}
+                        </div>
+                      </div>
+                      
                       {inventory && (
-                        <div className={`text-xs font-medium ${inventory.ballBearing.quantity >= requestedQuantity ? 'text-green-600' : 'text-red-600'}`}>
-                          Available: {inventory.ballBearing.quantity} {requestedQuantity > 0 && `(Need: ${requestedQuantity})`}
+                        <div className="space-y-2 pt-2 border-t border-gray-300">
+                          <div className="flex justify-between items-center">
+                            <div className="text-xs font-bold tracking-[0.15em] text-gray-500">
+                              AVAIL
+                            </div>
+                            <div className={`text-sm font-black ${inventory.ballBearing.quantity >= requestedQuantity ? 'text-black' : 'text-gray-400'}`}>
+                              {inventory.ballBearing.quantity}
+                            </div>
+                          </div>
+                          {requestedQuantity > 0 && (
+                            <div className="flex justify-between items-center">
+                              <div className="text-xs font-bold tracking-[0.15em] text-gray-500">
+                                REQ
+                              </div>
+                              <div className="text-sm font-black text-black">
+                                {requestedQuantity}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {inventory.ballBearing.quantity < requestedQuantity && requestedQuantity > 0 && (
+                            <div className="mt-2 pt-2 border-t border-gray-300">
+                              <div className="bg-black text-white px-2 py-1 text-xs font-bold tracking-[0.15em] uppercase">
+                                Short: {requestedQuantity - inventory.ballBearing.quantity}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -352,14 +429,26 @@ export function CreateConrodAssemblyDialog({ onCreateAssembly, children }: Creat
               )}
               
               {hasInsufficientInventory && (
-                <div className="p-2 bg-red-100 border border-red-200 rounded text-red-700 text-xs">
-                  ⚠️ Insufficient inventory for this quantity. Please reduce quantity or add more components to pre-production.
+                <div className="border border-black bg-white p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-6 h-6 bg-black text-white flex items-center justify-center text-sm font-black">
+                      !
+                    </div>
+                    <div>
+                      <div className="font-black text-black text-xs tracking-wide uppercase mb-1">
+                        Insufficient Inventory
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Reduce quantity or replenish components
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
               
-              <div className="pt-2 border-t border-blue-200">
-                <div className="text-xs text-blue-600">
-                  Dimensions: {recipe.dimensions.smallEndDiameter}mm × {recipe.dimensions.bigEndDiameter}mm × {recipe.dimensions.centerDistance}mm
+              <div className="pt-3 border-t border-gray-300">
+                <div className="text-xs text-gray-500 font-medium tracking-[0.1em] uppercase">
+                  Dimensions: {recipe.dimensions.smallEndDiameter} × {recipe.dimensions.bigEndDiameter} × {recipe.dimensions.centerDistance} mm
                 </div>
               </div>
             </div>

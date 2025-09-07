@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validate required fields
-    const { name, address, email, phone } = body;
+    const { name, address, phoneNumber, gstNo } = body;
 
     if (!name || !address) {
       return NextResponse.json(
@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
     const newCustomer = conrodDB.createCustomer({
       name,
       address,
-      email,
-      phone,
+      phoneNumber,
+      gstNo,
     });
 
     return NextResponse.json({ success: true, data: newCustomer }, { status: 201 });

@@ -56,6 +56,8 @@ export type Customer = {
   id: number
   name: string
   address: string
+  phoneNumber?: string
+  gstNo?: string
   createdAt?: string
 }
 
@@ -126,6 +128,46 @@ const getColumns = (
     },
   },
   {
+    accessorKey: "phoneNumber",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Phone Number
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const customer = row.original
+      return (
+        <div>{customer.phoneNumber || "N/A"}</div>
+      )
+    },
+  },
+  {
+    accessorKey: "gstNo",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          GST No.
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const customer = row.original
+      return (
+        <div>{customer.gstNo || "N/A"}</div>
+      )
+    },
+  },
+  {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
@@ -166,10 +208,20 @@ export default function CustomersPage() {
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [editingCustomer, setEditingCustomer] = React.useState<Customer | null>(null)
   const [newCustomer, setNewCustomer] = React.useState({
     name: "",
     address: "",
+    phoneNumber: "",
+    gstNo: "",
+  })
+  const [editFormData, setEditFormData] = React.useState({
+    name: "",
+    address: "",
+    phoneNumber: "",
+    gstNo: "",
   })
 
   const fetchCustomers = async () => {
@@ -221,7 +273,7 @@ export default function CustomersPage() {
         throw new Error(result.error || "Failed to create customer")
       }
       
-      setNewCustomer({ name: "", address: "" })
+      setNewCustomer({ name: "", address: "", phoneNumber: "", gstNo: "" })
       setIsAddDialogOpen(false)
       fetchCustomers()
     } catch (err) {
@@ -232,8 +284,51 @@ export default function CustomersPage() {
   }
 
   const handleEditItem = (customer: Customer) => {
-    console.log("Edit customer:", customer)
-    fetchCustomers()
+    setEditingCustomer(customer)
+    setEditFormData({
+      name: customer.name,
+      address: customer.address,
+      phoneNumber: customer.phoneNumber || "",
+      gstNo: customer.gstNo || "",
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleSubmitEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!editingCustomer || !editFormData.name.trim() || !editFormData.address.trim()) {
+      setError("Name and address are required")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setError(null)
+      
+      const response = await fetch(`/api/customers/${editingCustomer.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(editFormData),
+      })
+      
+      const result = await response.json()
+      
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update customer")
+      }
+      
+      setEditingCustomer(null)
+      setEditFormData({ name: "", address: "", phoneNumber: "", gstNo: "" })
+      setIsEditDialogOpen(false)
+      fetchCustomers()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update customer")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleDeleteItem = async (customerId: number) => {
@@ -332,6 +427,28 @@ export default function CustomersPage() {
                         required
                       />
                     </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="phoneNumber" className="text-right">
+                        Phone Number
+                      </Label>
+                      <Input
+                        id="phoneNumber"
+                        value={newCustomer.phoneNumber}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, phoneNumber: e.target.value })}
+                        className="col-span-3"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="gstNo" className="text-right">
+                        GST No.
+                      </Label>
+                      <Input
+                        id="gstNo"
+                        value={newCustomer.gstNo}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, gstNo: e.target.value })}
+                        className="col-span-3"
+                      />
+                    </div>
                     {error && (
                       <div className="col-span-4 text-sm text-destructive">
                         {error}
@@ -356,6 +473,91 @@ export default function CustomersPage() {
             </Dialog>
           }
         />
+        
+        {/* Edit Customer Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Customer</DialogTitle>
+              <DialogDescription>
+                Update customer information. Fill in the required information below.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmitEdit}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-name" className="text-right">
+                    Name *
+                  </Label>
+                  <Input
+                    id="edit-name"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-address" className="text-right">
+                    Address *
+                  </Label>
+                  <Input
+                    id="edit-address"
+                    value={editFormData.address}
+                    onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-phoneNumber" className="text-right">
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="edit-phoneNumber"
+                    value={editFormData.phoneNumber}
+                    onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-gstNo" className="text-right">
+                    GST No.
+                  </Label>
+                  <Input
+                    id="edit-gstNo"
+                    value={editFormData.gstNo}
+                    onChange={(e) => setEditFormData({ ...editFormData, gstNo: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                {error && (
+                  <div className="col-span-4 text-sm text-destructive">
+                    {error}
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsEditDialogOpen(false)
+                    setEditingCustomer(null)
+                    setEditFormData({ name: "", address: "", phoneNumber: "", gstNo: "" })
+                    setError(null)
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Updating..." : "Update Customer"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

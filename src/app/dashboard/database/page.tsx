@@ -58,6 +58,7 @@ export type ConrodItem = {
   ballBearingName: string
   ballBearingVariant: string
   ballBearingSize: string
+  amount?: number
   createdAt?: string
 }
 
@@ -197,6 +198,26 @@ const getColumns = (
             {item.ballBearingVariant}, {item.ballBearingSize}
           </div>
         </div>
+      )
+    },
+  },
+  {
+    accessorKey: "amount",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Amount
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const item = row.original
+      return (
+        <div className="text-center font-medium">{item.amount ? item.amount : "N/A"}</div>
       )
     },
   },

@@ -43,15 +43,15 @@ const data = {
     },
     {
       title: "Billing",
-      url: "#",
+      url: "/dashboard/billing",
     },
     {
       title: "Billing History",
-      url: "#",
+      url: "/dashboard/billing-history",
     },
     {
       title: "Customers",
-      url: "#",
+      url: "/dashboard/customers",
     },
     {
       title: "Database",

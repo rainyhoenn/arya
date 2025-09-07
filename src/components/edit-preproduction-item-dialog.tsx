@@ -56,8 +56,8 @@ export function EditPreProductionItemDialog({ item, onEditItem, children }: Edit
     quantity: item.quantity.toString(),
   })
 
-  const sizeOptions = ["Standard", "1", "2", "3", "4", "5", "6", "7"]
-  const variantOptions = ["Standard", "NRB"]
+  const sizeOptions = ["Std.", "1", "2", "3", "4", "5", "6", "7"]
+  const variantOptions = ["Local", "NRB"]
 
   React.useEffect(() => {
     if (open) {
@@ -78,7 +78,7 @@ export function EditPreProductionItemDialog({ item, onEditItem, children }: Edit
   }, [open, item])
 
   const loadAvailableNames = async (type: ItemType) => {
-    if (type && type !== "") {
+    if (type) {
       setIsLoadingNames(true)
       try {
         const apiType = type === "Ball Bearing" ? "ballBearing" : 

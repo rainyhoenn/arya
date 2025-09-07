@@ -43,10 +43,11 @@ export function AddConrodDialog({ onAddConrod, children }: AddConrodDialogProps)
     ballBearingName: "",
     ballBearingVariant: "",
     ballBearingSize: "",
+    amount: "",
   })
 
-  const variantOptions = ["Standard", "NRB"]
-  const sizeOptions = ["Standard", "1", "2", "3", "4", "5", "6", "7"]
+  const variantOptions = ["Local", "NRB"]
+  const sizeOptions = ["Std.", "1", "2", "3", "4", "5", "6", "7"]
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -81,6 +82,7 @@ export function AddConrodDialog({ onAddConrod, children }: AddConrodDialogProps)
           ballBearingName: formData.ballBearingName,
           ballBearingVariant: formData.ballBearingVariant,
           ballBearingSize: formData.ballBearingSize,
+          amount: parseInt(formData.amount),
         }),
       })
 
@@ -103,6 +105,7 @@ export function AddConrodDialog({ onAddConrod, children }: AddConrodDialogProps)
         ballBearingName: "",
         ballBearingVariant: "",
         ballBearingSize: "",
+        amount: "",
       })
       setOpen(false)
       
@@ -125,7 +128,8 @@ export function AddConrodDialog({ onAddConrod, children }: AddConrodDialogProps)
                      formData.pinSize && 
                      formData.ballBearingName && 
                      formData.ballBearingVariant && 
-                     formData.ballBearingSize
+                     formData.ballBearingSize &&
+                     formData.amount
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -325,6 +329,19 @@ export function AddConrodDialog({ onAddConrod, children }: AddConrodDialogProps)
                 </Select>
               </div>
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="amount">Amount</Label>
+            <Input
+              id="amount"
+              type="number"
+              min="1"
+              placeholder="e.g., 10"
+              value={formData.amount}
+              onChange={(e) => handleInputChange("amount", e.target.value)}
+              required
+            />
           </div>
           
           <DialogFooter>

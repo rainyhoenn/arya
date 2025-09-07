@@ -1,0 +1,212 @@
+"use client"
+
+import * as React from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
+export type ConrodAssemblyItem = {
+  id: number
+  name: string
+  type: string
+  size?: string
+  variant?: string
+  quantity: number
+  dateUpdated: string
+  createdAt: string
+}
+
+interface PrintConrodAssemblyDialogProps {
+  items: ConrodAssemblyItem[]
+  children: React.ReactNode
+}
+
+export function PrintConrodAssemblyDialog({ items, children }: PrintConrodAssemblyDialogProps) {
+  const [open, setOpen] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(false)
+
+  // Get filtered items with quantity > 0
+  const filteredItems = React.useMemo(() => {
+    return items.filter(item => item.quantity > 0)
+  }, [items])
+
+  const handlePrint = () => {
+    if (filteredItems.length === 0) return
+
+    setIsLoading(true)
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+
+    // Generate HTML content for printing
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Conrod Assemblies</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              color: #333;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 10px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+            }
+            .header p {
+              margin: 5px 0;
+              color: #666;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 12px;
+              text-align: left;
+            }
+            th {
+              background-color: #f5f5f5;
+              font-weight: bold;
+            }
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .quantity {
+              text-align: center;
+              font-weight: bold;
+            }
+            .footer {
+              margin-top: 30px;
+              text-align: center;
+              font-size: 12px;
+              color: #666;
+            }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Conrod Assemblies</h1>
+            <p>Date: ${new Date().toLocaleDateString()}</p>
+            <p>Total Items: ${filteredItems.length}</p>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Conrod Name</th>
+                <th>Size</th>
+                <th>Variant</th>
+                <th>Quantity</th>
+                <th>Date Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredItems.map(item => `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.size || 'N/A'}</td>
+                  <td>${item.variant || 'N/A'}</td>
+                  <td class="quantity">${item.quantity.toLocaleString()}</td>
+                  <td>${item.dateUpdated}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <p>Generated on ${new Date().toLocaleString()}</p>
+            <p>Total Quantity: ${filteredItems.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}</p>
+          </div>
+        </body>
+      </html>
+    `
+
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+
+    // Wait a moment for content to load, then print
+    setTimeout(() => {
+      printWindow.focus()
+      printWindow.print()
+      printWindow.close()
+      setIsLoading(false)
+      setOpen(false)
+    }, 500)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Print Conrod Assemblies</DialogTitle>
+          <DialogDescription>
+            Print all conrod assemblies with quantity greater than 0.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-md border p-3 bg-muted/50">
+            <p className="text-sm font-medium">Preview:</p>
+            <p className="text-sm text-muted-foreground">
+              {filteredItems.length} conrod assemblies with quantity &gt; 0
+            </p>
+            {filteredItems.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Total quantity: {filteredItems.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}
+              </p>
+            )}
+          </div>
+
+          {filteredItems.length === 0 && (
+            <div className="rounded-md border p-3 bg-yellow-50 dark:bg-yellow-950/20">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                No assemblies with quantity &gt; 0 found.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button 
+            type="button"
+            onClick={handlePrint}
+            disabled={filteredItems.length === 0 || isLoading}
+          >
+            {isLoading ? "Printing..." : "Print Assemblies"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

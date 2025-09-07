@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/sidebar"
 import { AddPreProductionItemDialog } from "@/components/add-preproduction-item-dialog"
 import { EditPreProductionItemDialog } from "@/components/edit-preproduction-item-dialog"
+import { PrintPreProductionDialog } from "@/components/print-preproduction-dialog"
 
 export type PreProductionItem = {
   id: number
@@ -112,10 +113,10 @@ const getColumns = (
     cell: ({ row }) => {
       const item = row.original
       let typeDisplay = item.type
-      if (item.size && item.size !== "Standard") {
+      if (item.size && item.size !== "Std.") {
         typeDisplay += ` (Size: ${item.size})`
       }
-      if (item.variant && item.variant !== "Standard") {
+      if (item.variant && item.variant !== "Local") {
         typeDisplay += ` (${item.variant})`
       }
       return <div>{typeDisplay}</div>
@@ -282,11 +283,18 @@ export default function PreProductionPage() {
         <SiteHeader 
           title="Pre-Production Inventory" 
           actions={
-            <AddPreProductionItemDialog onAddItem={handleAddItem}>
-              <Button size="sm">
-                Add Item
-              </Button>
-            </AddPreProductionItemDialog>
+            <div className="flex gap-2">
+              <PrintPreProductionDialog items={data}>
+                <Button size="sm" variant="outline">
+                  Print Items
+                </Button>
+              </PrintPreProductionDialog>
+              <AddPreProductionItemDialog onAddItem={handleAddItem}>
+                <Button size="sm">
+                  Add Item
+                </Button>
+              </AddPreProductionItemDialog>
+            </div>
           }
         />
         <div className="flex flex-1 flex-col">

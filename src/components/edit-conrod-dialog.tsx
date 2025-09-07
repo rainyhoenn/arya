@@ -36,6 +36,7 @@ export type ConrodItem = {
   ballBearingName: string
   ballBearingVariant: string
   ballBearingSize: string
+  amount?: number
   createdAt?: string
 }
 
@@ -61,10 +62,11 @@ export function EditConrodDialog({ item, onEditConrod, children }: EditConrodDia
     ballBearingName: item.ballBearingName,
     ballBearingVariant: item.ballBearingVariant,
     ballBearingSize: item.ballBearingSize,
+    amount: (item.amount || 0).toString(),
   })
 
-  const variantOptions = ["Standard", "NRB"]
-  const sizeOptions = ["Standard", "1", "2", "3", "4", "5", "6", "7"]
+  const variantOptions = ["Local", "NRB"]
+  const sizeOptions = ["Std.", "1", "2", "3", "4", "5", "6", "7"]
 
   React.useEffect(() => {
     if (open) {
@@ -80,6 +82,7 @@ export function EditConrodDialog({ item, onEditConrod, children }: EditConrodDia
         ballBearingName: item.ballBearingName,
         ballBearingVariant: item.ballBearingVariant,
         ballBearingSize: item.ballBearingSize,
+        amount: (item.amount || 0).toString(),
       })
       setError(null)
     }
@@ -113,6 +116,7 @@ export function EditConrodDialog({ item, onEditConrod, children }: EditConrodDia
           ballBearingName: formData.ballBearingName,
           ballBearingVariant: formData.ballBearingVariant,
           ballBearingSize: formData.ballBearingSize,
+          amount: parseInt(formData.amount),
         }),
       })
 
@@ -141,7 +145,8 @@ export function EditConrodDialog({ item, onEditConrod, children }: EditConrodDia
                      formData.pinSize && 
                      formData.ballBearingName && 
                      formData.ballBearingVariant && 
-                     formData.ballBearingSize
+                     formData.ballBearingSize &&
+                     formData.amount
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -341,6 +346,19 @@ export function EditConrodDialog({ item, onEditConrod, children }: EditConrodDia
                 </Select>
               </div>
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="amount">Amount</Label>
+            <Input
+              id="amount"
+              type="number"
+              min="1"
+              placeholder="e.g., 10"
+              value={formData.amount}
+              onChange={(e) => handleInputChange("amount", e.target.value)}
+              required
+            />
           </div>
           
           <DialogFooter>

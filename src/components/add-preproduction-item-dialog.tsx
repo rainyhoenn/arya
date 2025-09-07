@@ -44,8 +44,8 @@ export function AddPreProductionItemDialog({ onAddItem, children }: AddPreProduc
     quantity: "",
   })
 
-  const sizeOptions = ["Standard", "1", "2", "3", "4", "5", "6", "7"]
-  const variantOptions = ["Standard", "NRB"]
+  const sizeOptions = ["Std.", "1", "2", "3", "4", "5", "6", "7"]
+  const variantOptions = ["Local", "NRB"]
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -56,7 +56,7 @@ export function AddPreProductionItemDialog({ onAddItem, children }: AddPreProduc
   const handleTypeChange = async (type: ItemType) => {
     setFormData(prev => ({ ...prev, type, name: "", size: "", variant: "" }))
     
-    if (type && type !== "") {
+    if (type) {
       setIsLoadingNames(true)
       try {
         const apiType = type === "Ball Bearing" ? "ballBearing" : 

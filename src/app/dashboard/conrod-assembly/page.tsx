@@ -42,6 +42,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { CreateConrodAssemblyDialog } from "@/components/create-conrod-assembly-dialog"
+import { PrintConrodAssemblyDialog } from "@/components/print-conrod-assembly-dialog"
 
 export type ConrodAssemblyItem = {
   id: number
@@ -272,11 +273,18 @@ export default function ConrodAssemblyPage() {
         <SiteHeader 
           title="Conrod Assembly" 
           actions={
-            <CreateConrodAssemblyDialog onCreateAssembly={handleCreateAssembly}>
-              <Button size="sm">
-                Create Conrod Assembly
-              </Button>
-            </CreateConrodAssemblyDialog>
+            <div className="flex gap-2">
+              <PrintConrodAssemblyDialog items={data}>
+                <Button size="sm" variant="outline">
+                  Print Assemblies
+                </Button>
+              </PrintConrodAssemblyDialog>
+              <CreateConrodAssemblyDialog onCreateAssembly={handleCreateAssembly}>
+                <Button size="sm">
+                  Create Conrod Assembly
+                </Button>
+              </CreateConrodAssemblyDialog>
+            </div>
           }
         />
         <div className="flex flex-1 flex-col">
