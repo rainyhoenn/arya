@@ -225,11 +225,34 @@ export default function ConrodAssemblyPage() {
   const handleEditItem = (itemId: number) => {
     // TODO: Implement edit functionality
     console.log("Edit item:", itemId)
+    // This can be implemented later with a proper edit dialog
+    alert("Edit functionality will be implemented in a future update")
   }
 
-  const handleDeleteItem = (itemId: number) => {
-    // TODO: Implement delete functionality
-    console.log("Delete item:", itemId)
+  const handleDeleteItem = async (itemId: number) => {
+    const item = data.find(d => d.id === itemId)
+    if (!item) return
+
+    const confirmed = window.confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)
+    if (!confirmed) return
+
+    try {
+      const response = await fetch(`/api/conrod-assemblies/${itemId}`, {
+        method: "DELETE",
+      })
+      
+      const result = await response.json()
+      
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete conrod assembly")
+      }
+      
+      // Refresh the data
+      fetchConrodAssemblies()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete conrod assembly")
+      alert(`Error: ${err instanceof Error ? err.message : "Failed to delete conrod assembly"}`)
+    }
   }
 
   React.useEffect(() => {

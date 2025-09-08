@@ -58,6 +58,7 @@ export type Invoice = {
   createdAt: string
   transport?: string
   customerGstNo?: string
+  customerPhoneNumber?: string
   items?: InvoiceItem[]
 }
 
@@ -501,7 +502,8 @@ export default function BillingHistoryPage() {
             <div style="margin-bottom: 5px;"><strong>${invoice.customerName}</strong></div>
             <div>
               [Customer Address]<br>
-              ${invoice.customerGstNo ? `<strong>GST No.: </strong>${invoice.customerGstNo}` : ''}
+              ${invoice.customerGstNo ? `<strong>GST No.: </strong>${invoice.customerGstNo}<br>` : ''}
+              ${invoice.customerPhoneNumber ? `<strong>Phone No.: </strong>${invoice.customerPhoneNumber}` : ''}
             </div>
           </div>
         </td>
@@ -657,7 +659,8 @@ export default function BillingHistoryPage() {
               <td>Date: ${dateStr}</td>
             </tr>
             <tr>
-              <td>To, ${invoice.customerName}</td>
+              <td>To, ${invoice.customerName}<br>
+                ${invoice.customerPhoneNumber ? `Phone No.: ${invoice.customerPhoneNumber}` : ''}</td>
               <td rowspan="1">
                 *CLEARANCE FOR HOME CONSUMPTION /<br>
                 EXPORT NATURE FOR REMOVAL (e.g. Stock<br>
@@ -668,7 +671,7 @@ export default function BillingHistoryPage() {
               </td>
             </tr>
             <tr>
-              <td>E.C.C. No.:</td>
+              <td>Phone No.: ${invoice.customerPhoneNumber || ''}</td>
               <td>P.L.A. No.: 170 / 87 / 97</td>
             </tr>
             <tr>

@@ -35,6 +35,16 @@ export async function POST(request: NextRequest) {
       gstNo,
     });
 
+    // Log the activity
+    conrodDB.createActivityLog({
+      action: 'CREATE',
+      module: 'billing',
+      entityId: newCustomer.id,
+      entityName: name,
+      description: `Created customer: ${name}`,
+      details: `Address: ${address}${phoneNumber ? `, Phone: ${phoneNumber}` : ''}${gstNo ? `, GST No: ${gstNo}` : ''}`
+    });
+
     return NextResponse.json({ success: true, data: newCustomer }, { status: 201 });
   } catch (error) {
     console.error("Error creating customer:", error);

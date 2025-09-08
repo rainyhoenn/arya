@@ -2,24 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-} from "@tabler/icons-react"
-
+import Image from "next/image"
 import { NavMain } from "@/components/nav-main"
 import {
   Sidebar,
@@ -74,8 +57,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <Link href="/dashboard">
-                <span className="text-base font-bold">Globe</span>
+              <Link href="/dashboard" style={{ width: "100%", height: "120px!important",}}>
+                <Image
+                  src="/image.png"
+                  alt="logo"
+                />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
