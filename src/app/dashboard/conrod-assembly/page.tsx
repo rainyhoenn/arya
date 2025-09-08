@@ -41,6 +41,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { CreateConrodAssemblyDialog } from "@/components/create-conrod-assembly-dialog"
+import { EditConrodAssemblyDialog } from "@/components/edit-conrod-assembly-dialog"
 import { PrintConrodAssemblyDialog } from "@/components/print-conrod-assembly-dialog"
 
 export type ConrodAssemblyItem = {
@@ -55,7 +56,7 @@ export type ConrodAssemblyItem = {
 }
 
 const getColumns = (
-  handleEditItem: (id: number) => void,
+  handleEditItem: () => void,
   handleDeleteItem: (id: number) => void
 ): ColumnDef<ConrodAssemblyItem>[] => [
   {
@@ -184,9 +185,11 @@ const getColumns = (
               Copy item ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleEditItem(item.id)}>
-              Edit item
-            </DropdownMenuItem>
+            <EditConrodAssemblyDialog item={item} onEditItem={handleEditItem}>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                Edit item
+              </DropdownMenuItem>
+            </EditConrodAssemblyDialog>
             <DropdownMenuItem 
               className="text-destructive"
               onClick={() => handleDeleteItem(item.id)}
@@ -231,11 +234,8 @@ export default function ConrodAssemblyPage() {
     fetchConrodAssemblies() // Refresh data after creating assembly
   }
 
-  const handleEditItem = (itemId: number) => {
-    // TODO: Implement edit functionality
-    console.log("Edit item:", itemId)
-    // This can be implemented later with a proper edit dialog
-    alert("Edit functionality will be implemented in a future update")
+  const handleEditItem = () => {
+    fetchConrodAssemblies() // Refresh data after editing
   }
 
   const handleDeleteItem = async (itemId: number) => {

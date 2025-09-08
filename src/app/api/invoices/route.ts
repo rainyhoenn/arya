@@ -29,12 +29,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current conrod assembly inventory
-    const conrodAssemblies = conrodDB.getAllPreProductionItems().filter(item => item.type === "conrod");
+    const conrodAssemblies = conrodDB.getAllPreProductionItems().filter(item => item.type === "Conrod");
     
     // Check inventory availability for all products before proceeding
     for (const product of products) {
       const assembly = conrodAssemblies.find(item => 
-        item.id === product.productId && item.type === "conrod"
+        item.id === product.productId && item.type === "Conrod"
       );
 
       if (!assembly) {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     const inventoryDeductions = [];
     for (const product of products) {
       const assembly = conrodAssemblies.find(item => 
-        item.id === product.productId && item.type === "conrod"
+        item.id === product.productId && item.type === "Conrod"
       );
 
       if (assembly) {

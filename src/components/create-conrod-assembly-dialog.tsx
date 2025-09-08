@@ -104,22 +104,29 @@ export function CreateConrodAssemblyDialog({ onCreateAssembly, children }: Creat
       if (result.success) {
         const preProductionItems = result.data
         
+        // Find available conrod inventory
+        const availableConrod = preProductionItems.find((item: any) => 
+          item.type === "Conrod" && 
+          item.name === recipeData.requiredComponents.conrod.name
+        )
+        
         // Find available pin inventory
         const availablePin = preProductionItems.find((item: any) => 
-          item.type === "pin" && 
+          item.type === "Pin" && 
           item.name === recipeData.requiredComponents.pin.name && 
           item.size === recipeData.requiredComponents.pin.size
         )
         
         // Find available ball bearing inventory
         const availableBallBearing = preProductionItems.find((item: any) => 
-          item.type === "ballBearing" && 
+          item.type === "Ball Bearing" && 
           item.name === recipeData.requiredComponents.ballBearing.name && 
           item.variant === recipeData.requiredComponents.ballBearing.variant &&
           item.size === recipeData.requiredComponents.ballBearing.size
         )
         
         setInventory({
+          conrod: availableConrod || { quantity: 0 },
           pin: availablePin || { quantity: 0 },
           ballBearing: availableBallBearing || { quantity: 0 }
         })
@@ -213,6 +220,7 @@ export function CreateConrodAssemblyDialog({ onCreateAssembly, children }: Creat
 
   const requestedQuantity = parseInt(formData.quantity) || 0
   const hasInsufficientInventory = inventory && (
+    inventory.conrod.quantity < requestedQuantity ||
     inventory.pin.quantity < requestedQuantity ||
     inventory.ballBearing.quantity < requestedQuantity
   )
@@ -327,14 +335,60 @@ export function CreateConrodAssemblyDialog({ onCreateAssembly, children }: Creat
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Conrod Component */}
+                  <div className="border border-black bg-white relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-black"></div>
+                    <div className="pl-3 pr-2 py-3">
+                      <div className="mb-3">
+                        <div className="text-xs font-bold tracking-[0.2em] text-gray-500 mb-1">
+                          01 / CONROD
+                        </div>
+                        <h3 className="text-xs font-black text-black leading-tight tracking-wide mb-1">
+                          {recipe.requiredComponents.conrod.name}
+                        </h3>
+                      </div>
+                      
+                      {inventory && (
+                        <div className="space-y-2 pt-2 border-t border-gray-300">
+                          <div className="flex justify-between items-center">
+                            <div className="text-xs font-bold tracking-[0.15em] text-gray-500">
+                              AVAIL
+                            </div>
+                            <div className={`text-sm font-black ${inventory.conrod.quantity >= requestedQuantity ? 'text-black' : 'text-gray-400'}`}>
+                              {inventory.conrod.quantity}
+                            </div>
+                          </div>
+                          {requestedQuantity > 0 && (
+                            <div className="flex justify-between items-center">
+                              <div className="text-xs font-bold tracking-[0.15em] text-gray-500">
+                                REQ
+                              </div>
+                              <div className="text-sm font-black text-black">
+                                {requestedQuantity}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {inventory.conrod.quantity < requestedQuantity && requestedQuantity > 0 && (
+                            <div className="mt-2 pt-2 border-t border-gray-300">
+                              <div className="bg-black text-white px-2 py-1 text-xs font-bold tracking-[0.15em] uppercase">
+                                Short: {requestedQuantity - inventory.conrod.quantity}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Pin Component */}
                   <div className="border border-black bg-white relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-black"></div>
                     <div className="pl-3 pr-2 py-3">
                       <div className="mb-3">
                         <div className="text-xs font-bold tracking-[0.2em] text-gray-500 mb-1">
-                          01 / PIN
+                          02 / PIN
                         </div>
                         <h3 className="text-xs font-black text-black leading-tight tracking-wide mb-1">
                           {recipe.requiredComponents.pin.name}
@@ -383,7 +437,7 @@ export function CreateConrodAssemblyDialog({ onCreateAssembly, children }: Creat
                     <div className="pl-3 pr-2 py-3">
                       <div className="mb-3">
                         <div className="text-xs font-bold tracking-[0.2em] text-gray-500 mb-1">
-                          02 / BEARING
+                          03 / BEARING
                         </div>
                         <h3 className="text-xs font-black text-black leading-tight tracking-wide mb-1">
                           {recipe.requiredComponents.ballBearing.name}

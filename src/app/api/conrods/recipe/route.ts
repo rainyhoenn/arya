@@ -41,6 +41,9 @@ export async function GET(request: NextRequest) {
         centerDistance: matchingConrod.centerDistance,
       },
       requiredComponents: {
+        conrod: {
+          name: matchingConrod.conrodName,
+        },
         pin: {
           name: matchingConrod.pinName,
           size: matchingConrod.pinSize,

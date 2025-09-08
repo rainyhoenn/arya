@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const items = conrodDB.getAllPreProductionItems();
     // Filter for conrod assemblies (type "conrod")
-    const conrodAssemblies = items.filter(item => item.type === "conrod");
+    const conrodAssemblies = items.filter(item => item.type === "Conrod");
     return NextResponse.json({ success: true, data: conrodAssemblies });
   } catch (error) {
     console.error("Error fetching conrod assemblies:", error);
@@ -62,22 +62,35 @@ export async function POST(request: NextRequest) {
     // Get current pre-production inventory
     const preProductionItems = conrodDB.getAllPreProductionItems();
     
+    // Find required conrod in inventory
+    const requiredConrod = preProductionItems.find(item => 
+      item.type === "Conrod" && 
+      item.name === recipe.conrodName
+    );
+    
     // Find required pin in inventory
     const requiredPin = preProductionItems.find(item => 
-      item.type === "pin" && 
+      item.type === "Pin" && 
       item.name === recipe.pinName && 
       item.size === recipe.pinSize
     );
 
     // Find required ball bearing in inventory  
     const requiredBallBearing = preProductionItems.find(item => 
-      item.type === "ballBearing" && 
+      item.type === "Ball Bearing" && 
       item.name === recipe.ballBearingName && 
       item.variant === recipe.ballBearingVariant &&
       item.size === recipe.ballBearingSize
     );
 
     // Check inventory availability
+    if (!requiredConrod) {
+      return NextResponse.json(
+        { success: false, error: `Required conrod (${recipe.conrodName}) not found in pre-production inventory` },
+        { status: 400 }
+      );
+    }
+
     if (!requiredPin) {
       return NextResponse.json(
         { success: false, error: `Required pin (${recipe.pinName}, Size: ${recipe.pinSize}) not found in pre-production inventory` },
@@ -88,6 +101,13 @@ export async function POST(request: NextRequest) {
     if (!requiredBallBearing) {
       return NextResponse.json(
         { success: false, error: `Required ball bearing (${recipe.ballBearingName}, ${recipe.ballBearingVariant}, Size: ${recipe.ballBearingSize}) not found in pre-production inventory` },
+        { status: 400 }
+      );
+    }
+
+    if (requiredConrod.quantity < requestedQuantity) {
+      return NextResponse.json(
+        { success: false, error: `Insufficient conrod inventory. Required: ${requestedQuantity}, Available: ${requiredConrod.quantity}` },
         { status: 400 }
       );
     }
@@ -107,6 +127,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Deduct components from inventory (1:1 ratio)
+    const updatedConrod = conrodDB.updatePreProductionItem(requiredConrod.id, {
+      quantity: requiredConrod.quantity - requestedQuantity,
+      dateUpdated
+    });
+
     const updatedPin = conrodDB.updatePreProductionItem(requiredPin.id, {
       quantity: requiredPin.quantity - requestedQuantity,
       dateUpdated
@@ -117,7 +142,7 @@ export async function POST(request: NextRequest) {
       dateUpdated
     });
 
-    if (!updatedPin || !updatedBallBearing) {
+    if (!updatedConrod || !updatedPin || !updatedBallBearing) {
       return NextResponse.json(
         { success: false, error: "Failed to update inventory" },
         { status: 500 }
@@ -127,7 +152,7 @@ export async function POST(request: NextRequest) {
     // Create the assembly record
     const newAssembly = conrodDB.createPreProductionItem({
       name: conrodType,
-      type: "conrod",
+      type: "Conrod",
       size,
       variant,
       quantity: requestedQuantity,
@@ -141,10 +166,19 @@ export async function POST(request: NextRequest) {
       entityId: newAssembly.id,
       entityName: conrodType,
       description: `Created conrod assembly: ${conrodType}`,
-      details: `Variant: ${variant}, Size: ${size}, Quantity: ${requestedQuantity}. Components used: ${requestedQuantity}x ${recipe.pinName} (${recipe.pinSize}), ${requestedQuantity}x ${recipe.ballBearingName} (${recipe.ballBearingVariant}, ${recipe.ballBearingSize})`
+      details: `Variant: ${variant}, Size: ${size}, Quantity: ${requestedQuantity}. Components used: ${requestedQuantity}x ${recipe.conrodName}, ${requestedQuantity}x ${recipe.pinName} (${recipe.pinSize}), ${requestedQuantity}x ${recipe.ballBearingName} (${recipe.ballBearingVariant}, ${recipe.ballBearingSize})`
     });
 
     // Log inventory deduction activities
+    conrodDB.createActivityLog({
+      action: 'DEDUCT',
+      module: 'conrod-assembly',
+      entityId: requiredConrod.id,
+      entityName: recipe.conrodName,
+      description: `Deducted components for conrod assembly: ${conrodType}`,
+      details: `Conrod: ${recipe.conrodName} - Deducted: ${requestedQuantity}, Remaining: ${updatedConrod.quantity}`
+    });
+
     conrodDB.createActivityLog({
       action: 'DEDUCT',
       module: 'conrod-assembly',
@@ -167,6 +201,7 @@ export async function POST(request: NextRequest) {
       success: true, 
       data: newAssembly,
       inventoryDeducted: {
+        conrod: { name: recipe.conrodName, quantity: requestedQuantity },
         pin: { name: recipe.pinName, size: recipe.pinSize, quantity: requestedQuantity },
         ballBearing: { name: recipe.ballBearingName, variant: recipe.ballBearingVariant, size: recipe.ballBearingSize, quantity: requestedQuantity }
       }

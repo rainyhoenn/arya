@@ -625,9 +625,9 @@ ${Array.from({length: 10}, (_, index) => {
           body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
           .invoice-box { max-width: 800px; margin: auto; padding: 20px; background-color:rgb(249, 226, 113); border: 1px solid #000; }
           table { width: 100%; border-collapse: collapse; }
-          .header { font-size: 20px; font-weight: bold; text-align: left; margin-bottom: 5px; }
-          .address { font-size: 12px; margin-bottom: 15px; }
-          td { font-size: 12px; }
+          .header { font-size: 16px; font-weight: bold; text-align: left; margin-bottom: 5px; }
+          .address { font-size: 11px; margin-bottom: 15px; }
+          td { font-size: 11px; }
           .main-table td { border: 1px solid #000; padding: 4px; vertical-align: top; }
           .items-table { border-collapse: collapse; margin: 0; }
           .items-table td { border: 1px solid #000; padding: 4px; }
@@ -643,7 +643,7 @@ ${Array.from({length: 10}, (_, index) => {
         <div class="invoice-box">
           <div class="header">GLOBE ACCESSORIES PVT. LTD.</div>
           <div style="float: right; margin-top: -30px; margin-right: 20px;">
-            <img src="/image.png" alt="Logo" style="width: 50px; height: 50px;" />
+            <img src="/image.png" alt="Logo" style="width: 84px; height: 50px;" />
           </div>
           <div class="address">Gate No.: 2145/2146, Nanekarwadi, Chakan,<br>Tal.: Khed, Dist.: Pune - 410 501.</div>
           
@@ -659,7 +659,7 @@ ${Array.from({length: 10}, (_, index) => {
             <tr>
               <td>To, ${invoice.customerName}<br>
                 ${invoice.customerPhoneNumber ? `Phone No.: ${invoice.customerPhoneNumber}` : ''}</td>
-              <td rowspan="1">
+              <td rowspan="1" style="font-size: 9px;">
                 *CLEARANCE FOR HOME CONSUMPTION /<br>
                 EXPORT NATURE FOR REMOVAL (e.g. Stock<br>
                 Transfer / Captive use Related Person /<br>
@@ -707,7 +707,7 @@ ${Array.from({length: 10}, (_, index) => {
               <td></td>
               <td></td>
             </tr>
-${Array.from({length: 10}, (_, index) => {
+${Array.from({length: 9}, (_, index) => {
               const item = invoice.items?.[index];
               const rate = item?.quantity ? (subTotal / invoice.items!.reduce((sum, i) => sum + i.quantity, 0)).toFixed(2) : '';
               const amount = item?.quantity ? (parseFloat(rate) * item.quantity).toFixed(2) : '';
@@ -784,7 +784,7 @@ ${Array.from({length: 10}, (_, index) => {
             </tr>
             <tr>
               <td colspan="3" style="border: 1px solid black;">GST No.: 27AAACG4173B1Z0</td>
-              <td style="border: 1px solid black; text-align: center;">Space for Pre-authentication</td>
+              <td style="border: 1px solid black; text-align: center; font-size: 11px;">Pre-authentication</td>
               <td colspan="3" style="border: 1px solid black; text-align: center;">For Globe Accessories Pvt. Ltd.<br><br><br>Authorised Signatories</td>
             </tr>
           </table>
