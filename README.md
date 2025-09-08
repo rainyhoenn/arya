@@ -2,6 +2,20 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### 🚀 Windows Users (Recommended)
+
+For the easiest setup on Windows, simply **double-click** the `start.bat` file!
+
+This will automatically:
+- ✅ Set PowerShell execution policy
+- ✅ Install dependencies (`bun install`)  
+- ✅ Start development server (`bun --bun run dev`)
+- ✅ Open your browser to `http://localhost:3000`
+
+📖 **See [WINDOWS_SETUP.md](./WINDOWS_SETUP.md) for detailed Windows instructions**
+
+### 💻 Manual Setup (All Platforms)
+
 First, run the development server:
 
 ```bash
