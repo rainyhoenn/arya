@@ -13,11 +13,10 @@ This guide will help Windows users get Arya running quickly and easily!
    - ✅ Start the development server with `bun --bun run dev`
    - ✅ Open your browser automatically to `http://localhost:3000`
 
-### Option 2: PowerShell Direct
+### Option 2: Simple Start
 
-1. Right-click on `start-dev-server.ps1`
-2. Select "Run with PowerShell"
-3. The script handles everything automatically!
+1. Double-click `start-simple.bat` for minimal automation
+2. Less verbose output, same functionality
 
 ## 📋 Prerequisites
 
