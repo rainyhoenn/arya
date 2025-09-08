@@ -122,7 +122,19 @@ if ($serverStarted) {
     Write-Host "🎉 Arya Development Server is now running!" -ForegroundColor Green
     Write-Host "=====================================" -ForegroundColor Green
     Write-Host "🔗 Local:   http://localhost:3000" -ForegroundColor Cyan
-    Write-Host "🔗 Network: http://$(([System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) | Where-Object { $_.AddressFamily -eq 'InterNetwork' })[0].IPAddressToString):3000" -ForegroundColor Cyan
+    
+    # Get network IP safely
+    try {
+        $networkIP = (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Wi-Fi*", "Ethernet*" | Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.*" } | Select-Object -First 1).IPAddress
+        if ($networkIP) {
+            Write-Host "🔗 Network: http://$networkIP`:3000" -ForegroundColor Cyan
+        } else {
+            Write-Host "🔗 Network: http://[your-ip]:3000" -ForegroundColor Cyan
+        }
+    } catch {
+        Write-Host "🔗 Network: http://[your-ip]:3000" -ForegroundColor Cyan
+    }
+    
     Write-Host ""
     Write-Host "📝 Press Ctrl+C to stop the server" -ForegroundColor Gray
     Write-Host "🔄 The server will automatically reload when you save files" -ForegroundColor Gray
