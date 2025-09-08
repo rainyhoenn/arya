@@ -125,34 +125,40 @@ const getColumns = (
     accessorKey: "quantity",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Quantity
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="w-20 text-center">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="w-full justify-center"
+          >
+            Quantity
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       )
     },
     cell: ({ row }) => {
       const quantity = parseInt(row.getValue("quantity"))
-      return <div className="text-right font-medium">{quantity.toLocaleString()}</div>
+      return <div className="w-20 text-center font-medium">{quantity.toLocaleString()}</div>
     },
   },
   {
     accessorKey: "dateUpdated",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date Updated
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="w-28 text-center">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="w-full justify-center"
+          >
+            Date Updated
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       )
     },
-    cell: ({ row }) => <div>{row.getValue("dateUpdated")}</div>,
+    cell: ({ row }) => <div className="w-28 text-center">{row.getValue("dateUpdated")}</div>,
   },
   {
     id: "actions",

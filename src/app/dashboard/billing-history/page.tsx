@@ -531,32 +531,30 @@ export default function BillingHistoryPage() {
         <td style="width: 10%; text-align: center;" class="section-header">RATE</td>
         <td style="width: 15%; text-align: center;" class="section-header">AMOUNT</td>
       </tr>
-      ${invoice.items?.map((item, index) => {
-        const rate = item.quantity ? (subTotal / invoice.items!.reduce((sum, i) => sum + i.quantity, 0)).toFixed(2) : '';
-        const amount = item.quantity ? (parseFloat(rate) * item.quantity).toFixed(2) : '';
+      <tr>
+        <td></td>
+        <td></td>
+        <td>this is standard text</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+${Array.from({length: 10}, (_, index) => {
+        const item = invoice.items?.[index];
+        const rate = item?.quantity ? (subTotal / invoice.items!.reduce((sum, i) => sum + i.quantity, 0)).toFixed(2) : '';
+        const amount = item?.quantity ? (parseFloat(rate) * item.quantity).toFixed(2) : '';
         return `
           <tr>
             <td style="text-align: center;">${index + 1}</td>
             <td></td>
-            <td>${item.productName}</td>
-            <td style="text-align: center;">Nos</td>
-            <td style="text-align: center;">${item.quantity}</td>
-            <td style="text-align: right;">${rate}</td>
-            <td style="text-align: right;">${amount}</td>
+            <td>${item?.productName || ''}</td>
+            <td style="text-align: center;">${item ? 'Nos' : ''}</td>
+            <td style="text-align: center;">${item?.quantity || ''}</td>
+            <td style="text-align: right;">${rate || ''}</td>
+            <td style="text-align: right;">${amount || ''}</td>
           </tr>`;
-      }).join('') || `
-      <tr>
-        <td style="text-align: center;">1</td>
-        <td></td>
-        <td>No items</td>
-        <td style="text-align: center;">Nos</td>
-        <td style="text-align: center;">0</td>
-        <td style="text-align: right;">0.00</td>
-        <td style="text-align: right;">0.00</td>
-      </tr>`}
-      <tr style="height: ${Math.max(400 - (invoice.items?.length || 1) * 30, 100)}px;">
-        <td colspan="7"></td>
-      </tr>
+      }).join('')}
       <tr>
         <td colspan="5" style="border: none;"></td>
         <td style="border: 1px solid black; text-align: right;">Sub Total</td>
@@ -701,28 +699,29 @@ export default function BillingHistoryPage() {
               <td style="width: 15%">Rate per Unit Rs.</td>
               <td style="width: 15%">Total Amount<br>Rs.</td>
             </tr>
-            ${invoice.items?.map((item, index) => {
-              const rate = item.quantity ? (subTotal / invoice.items!.reduce((sum, i) => sum + i.quantity, 0)).toFixed(2) : '';
-              const amount = item.quantity ? (parseFloat(rate) * item.quantity).toFixed(2) : '';
+            <tr>
+              <td></td>
+              <td>this is standard text</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+${Array.from({length: 10}, (_, index) => {
+              const item = invoice.items?.[index];
+              const rate = item?.quantity ? (subTotal / invoice.items!.reduce((sum, i) => sum + i.quantity, 0)).toFixed(2) : '';
+              const amount = item?.quantity ? (parseFloat(rate) * item.quantity).toFixed(2) : '';
               return `
                 <tr>
                   <td>${index + 1}</td>
-                  <td>${item.productName}</td>
+                  <td>${item?.productName || ''}</td>
                   <td></td>
-                  <td>${item.quantity || ''}</td>
+                  <td>${item?.quantity || ''}</td>
                   <td>${rate || ''}</td>
                   <td>${amount || ''}</td>
                 </tr>
               `;
-            }).join('') || `
-            <tr>
-              <td>1</td>
-              <td>No items</td>
-              <td></td>
-              <td>0</td>
-              <td>0.00</td>
-              <td>0.00</td>
-            </tr>`}
+            }).join('')}
           </table>
 
           <table class="footer-table" style="width: 100%; border-collapse: collapse; margin-top:0;">

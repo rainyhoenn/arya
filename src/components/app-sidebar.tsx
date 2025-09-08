@@ -3,11 +3,11 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { NavMain } from "@/components/nav-main"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -52,18 +52,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
-              <Link href="/dashboard" style={{ width: "100%", height: "120px!important",}}>
-                <Image
-                  src="/image.png"
-                  alt="logo"
-                />
-              </Link>
-            </SidebarMenuButton>
+        <SidebarMenuItem>
+            <div className="flex items-center justify-center py-1">
+              <Image src="/image.png" alt="logo" width={100} height={90} />
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

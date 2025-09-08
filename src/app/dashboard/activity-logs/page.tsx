@@ -12,19 +12,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, Filter, Activity } from "lucide-react"
+import { ArrowUpDown, Activity } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -35,7 +26,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import {
@@ -216,19 +206,15 @@ const getColumns = (): ColumnDef<ActivityLogItem>[] => [
 
 export default function ActivityLogsPage() {
   const [data, setData] = React.useState<ActivityLogItem[]>([])
-  const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [sorting, setSorting] = React.useState<SortingState>([{ id: "createdAt", desc: true }])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [rowSelection, setRowSelection] = React.useState({})
-  const [moduleFilter, setModuleFilter] = React.useState<string>("")
-
-  const fetchActivityLogs = async (module?: string) => {
+  
+  const fetchActivityLogs = async () => {
     try {
-      setIsLoading(true)
       setError(null)
-      const url = module && module !== "all" ? `/api/activity-logs?module=${module}` : "/api/activity-logs"
-      const response = await fetch(url)
+      const response = await fetch("/api/activity-logs")
       const result = await response.json()
       
       if (!result.success) {
@@ -238,14 +224,12 @@ export default function ActivityLogsPage() {
       setData(result.data)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch activity logs")
-    } finally {
-      setIsLoading(false)
     }
   }
 
   React.useEffect(() => {
-    fetchActivityLogs(moduleFilter)
-  }, [moduleFilter])
+    fetchActivityLogs()
+  }, [])
 
   const columns = getColumns()
 
@@ -286,7 +270,7 @@ export default function ActivityLogsPage() {
                 
 
                 <div className="w-full space-y-4 py-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center">
                       <Input
                         placeholder="Filter activities..."
                         value={(table.getColumn("description")?.getFilterValue() as string) ?? ""}
@@ -295,31 +279,6 @@ export default function ActivityLogsPage() {
                         }
                         className="max-w-sm"
                       />
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline">
-                            <Filter className="mr-2 h-4 w-4" />
-                            Module: {moduleFilter || "All"}
-                            <ChevronDown className="ml-2 h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuLabel>Filter by Module</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setModuleFilter("")}>
-                            All Modules
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setModuleFilter("pre-production")}>
-                            Pre-Production
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setModuleFilter("conrod-assembly")}>
-                            Conrod Assembly
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setModuleFilter("billing")}>
-                            Billing
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                   </div>
                   
                   <div className="rounded-md border">
@@ -343,19 +302,7 @@ export default function ActivityLogsPage() {
                         ))}
                       </TableHeader>
                       <TableBody>
-                        {isLoading ? (
-                          <TableRow>
-                            <TableCell
-                              colSpan={columns.length}
-                              className="h-24 text-center"
-                            >
-                              <div className="flex items-center justify-center">
-                                <Activity className="mr-2 h-4 w-4 animate-spin" />
-                                Loading activity logs...
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : error ? (
+                        {error ? (
                           <TableRow>
                             <TableCell
                               colSpan={columns.length}
