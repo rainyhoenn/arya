@@ -66,7 +66,7 @@ export function EditConrodDialog({ item, onEditConrod, children }: EditConrodDia
   })
 
   const variantOptions = ["Local", "NRB"]
-  const sizeOptions = ["Std.", "1", "2", "3", "4", "5", "6", "7"]
+  const sizeOptions = ["STD", "1", "2", "3", "4", "5", "6", "7"]
 
   React.useEffect(() => {
     if (open) {

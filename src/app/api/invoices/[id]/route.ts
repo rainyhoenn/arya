@@ -52,13 +52,34 @@ export async function PUT(
       );
     }
 
-    const updatedInvoice = conrodDB.updateInvoiceStatus(invoiceId, status);
-
-    if (!updatedInvoice) {
+    // Get the original invoice for logging
+    const originalInvoice = conrodDB.getInvoiceById(invoiceId);
+    if (!originalInvoice) {
       return NextResponse.json(
         { success: false, error: "Invoice not found" },
         { status: 404 }
       );
+    }
+
+    const updatedInvoice = conrodDB.updateInvoiceStatus(invoiceId, status);
+
+    if (!updatedInvoice) {
+      return NextResponse.json(
+        { success: false, error: "Failed to update invoice" },
+        { status: 500 }
+      );
+    }
+
+    // Log the status change
+    if (originalInvoice.status !== status) {
+      conrodDB.createActivityLog({
+        action: 'UPDATE',
+        module: 'billing',
+        entityId: invoiceId,
+        entityName: updatedInvoice.invoiceNo,
+        description: `Invoice ${updatedInvoice.invoiceNo} status updated`,
+        details: `Status changed from '${originalInvoice.status}' to '${status}'`
+      });
     }
 
     return NextResponse.json({ success: true, data: updatedInvoice });
@@ -78,14 +99,33 @@ export async function DELETE(
   try {
     const params = await context.params;
     const invoiceId = parseInt(params.id);
-    const success = conrodDB.deleteInvoice(invoiceId);
-
-    if (!success) {
+    // Get the invoice before deleting for logging
+    const invoiceToDelete = conrodDB.getInvoiceById(invoiceId);
+    if (!invoiceToDelete) {
       return NextResponse.json(
         { success: false, error: "Invoice not found" },
         { status: 404 }
       );
     }
+
+    const success = conrodDB.deleteInvoice(invoiceId);
+
+    if (!success) {
+      return NextResponse.json(
+        { success: false, error: "Failed to delete invoice" },
+        { status: 500 }
+      );
+    }
+
+    // Log the deletion
+    conrodDB.createActivityLog({
+      action: 'DELETE',
+      module: 'billing',
+      entityId: invoiceId,
+      entityName: invoiceToDelete.invoiceNo,
+      description: `Deleted invoice ${invoiceToDelete.invoiceNo}`,
+      details: `Total Amount: ₹${invoiceToDelete.totalAmount.toFixed(2)}, Status: ${invoiceToDelete.status}`
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

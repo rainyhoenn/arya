@@ -27,6 +27,7 @@ type Customer = {
   address: string
   email?: string
   phone?: string
+  gstNo?: string
 }
 
 type ConrodAssemblyItem = {
@@ -51,6 +52,7 @@ type ProductItem = {
 export default function BillingPage() {
   const [invoiceNo, setInvoiceNo] = React.useState("")
   const [selectedCustomer, setSelectedCustomer] = React.useState("")
+  const [transport, setTransport] = React.useState("")
   const [products, setProducts] = React.useState<ProductItem[]>([])
   const [selectedProduct, setSelectedProduct] = React.useState("")
   const [quantity, setQuantity] = React.useState("")
@@ -198,6 +200,7 @@ export default function BillingPage() {
         body: JSON.stringify({
           invoiceNo,
           customerId: selectedCustomer,
+          transport,
           products: products.map(p => ({
             productId: p.productId,
             productName: p.productName,
@@ -226,6 +229,7 @@ export default function BillingPage() {
       // Reset form
       setInvoiceNo("")
       setSelectedCustomer("")
+      setTransport("")
       setProducts([])
       
       // Refresh product data to update stock levels
@@ -266,7 +270,7 @@ export default function BillingPage() {
                       </div>
                     )}
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="invoiceNo">Invoice No</Label>
                         <Input
@@ -290,6 +294,15 @@ export default function BillingPage() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="transport">Mode of Transport</Label>
+                        <Input
+                          id="transport"
+                          placeholder="Road Transport"
+                          value={transport}
+                          onChange={(e) => setTransport(e.target.value)}
+                        />
                       </div>
                     </div>
 

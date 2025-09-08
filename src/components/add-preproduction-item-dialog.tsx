@@ -44,7 +44,7 @@ export function AddPreProductionItemDialog({ onAddItem, children }: AddPreProduc
     quantity: "",
   })
 
-  const sizeOptions = ["Std.", "1", "2", "3", "4", "5", "6", "7"]
+  const sizeOptions = ["STD", "1", "2", "3", "4", "5", "6", "7"]
   const variantOptions = ["Local", "NRB"]
 
   const handleInputChange = (field: string, value: string) => {

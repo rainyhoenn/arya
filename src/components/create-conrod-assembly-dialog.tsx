@@ -46,7 +46,7 @@ export function CreateConrodAssemblyDialog({ onCreateAssembly, children }: Creat
   })
 
   const variantOptions = ["Local", "NRB"]
-  const sizeOptions = ["Std.", "1", "2", "3", "4", "5", "6", "7"]
+  const sizeOptions = ["STD", "1", "2", "3", "4", "5", "6", "7"]
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))

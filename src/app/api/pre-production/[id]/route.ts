@@ -49,6 +49,15 @@ export async function PUT(
 
     const body = await request.json();
     
+    // Get the original item for logging
+    const originalItem = conrodDB.getPreProductionItemById(id);
+    if (!originalItem) {
+      return NextResponse.json(
+        { success: false, error: "Pre-production item not found" },
+        { status: 404 }
+      );
+    }
+
     // Update the dateUpdated field to current date
     body.dateUpdated = new Date().toISOString().split('T')[0];
     
@@ -60,6 +69,23 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    // Log the activity
+    const changes = [];
+    if (body.name && body.name !== originalItem.name) changes.push(`Name: ${originalItem.name} → ${body.name}`);
+    if (body.type && body.type !== originalItem.type) changes.push(`Type: ${originalItem.type} → ${body.type}`);
+    if (body.quantity && body.quantity !== originalItem.quantity) changes.push(`Quantity: ${originalItem.quantity} → ${body.quantity}`);
+    if (body.size && body.size !== originalItem.size) changes.push(`Size: ${originalItem.size || 'N/A'} → ${body.size}`);
+    if (body.variant && body.variant !== originalItem.variant) changes.push(`Variant: ${originalItem.variant || 'N/A'} → ${body.variant}`);
+
+    conrodDB.createActivityLog({
+      action: 'UPDATE',
+      module: 'pre-production',
+      entityId: id,
+      entityName: updatedItem.name,
+      description: `Updated pre-production item: ${updatedItem.name}`,
+      details: changes.length > 0 ? changes.join(', ') : 'Minor updates'
+    });
 
     return NextResponse.json({ success: true, data: updatedItem });
   } catch (error) {
@@ -85,13 +111,32 @@ export async function DELETE(
       );
     }
 
-    const deleted = conrodDB.deletePreProductionItem(id);
-    if (!deleted) {
+    // Get the item before deleting for logging
+    const itemToDelete = conrodDB.getPreProductionItemById(id);
+    if (!itemToDelete) {
       return NextResponse.json(
         { success: false, error: "Pre-production item not found" },
         { status: 404 }
       );
     }
+
+    const deleted = conrodDB.deletePreProductionItem(id);
+    if (!deleted) {
+      return NextResponse.json(
+        { success: false, error: "Failed to delete pre-production item" },
+        { status: 500 }
+      );
+    }
+
+    // Log the activity
+    conrodDB.createActivityLog({
+      action: 'DELETE',
+      module: 'pre-production',
+      entityId: id,
+      entityName: itemToDelete.name,
+      description: `Deleted pre-production item: ${itemToDelete.name}`,
+      details: `Type: ${itemToDelete.type}, Quantity: ${itemToDelete.quantity}`
+    });
 
     return NextResponse.json({ success: true, message: "Pre-production item deleted" });
   } catch (error) {

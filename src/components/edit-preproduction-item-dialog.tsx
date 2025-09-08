@@ -56,7 +56,7 @@ export function EditPreProductionItemDialog({ item, onEditItem, children }: Edit
     quantity: item.quantity.toString(),
   })
 
-  const sizeOptions = ["Std.", "1", "2", "3", "4", "5", "6", "7"]
+  const sizeOptions = ["STD", "1", "2", "3", "4", "5", "6", "7"]
   const variantOptions = ["Local", "NRB"]
 
   React.useEffect(() => {

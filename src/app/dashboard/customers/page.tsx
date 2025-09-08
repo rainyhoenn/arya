@@ -5,7 +5,6 @@ import {
   ColumnDef,
   ColumnFiltersState,
   SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -205,7 +204,6 @@ export default function CustomersPage() {
   const [error, setError] = React.useState<string | null>(null)
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
@@ -364,12 +362,10 @@ export default function CustomersPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
-      columnVisibility,
       rowSelection,
     },
   })
@@ -564,7 +560,7 @@ export default function CustomersPage() {
               <div className="px-4 lg:px-6">
                 
                 <div className="w-full space-y-4 py-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center">
                     <Input
                       placeholder="Filter customers..."
                       value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -573,32 +569,6 @@ export default function CustomersPage() {
                       }
                       className="max-w-sm"
                     />
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                          Columns <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {table
-                          .getAllColumns()
-                          .filter((column) => column.getCanHide())
-                          .map((column) => {
-                            return (
-                              <DropdownMenuCheckboxItem
-                                key={column.id}
-                                className="capitalize"
-                                checked={column.getIsVisible()}
-                                onCheckedChange={(value) =>
-                                  column.toggleVisibility(!!value)
-                                }
-                              >
-                                {column.id}
-                              </DropdownMenuCheckboxItem>
-                            )
-                          })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                   
                   <div className="rounded-md border">

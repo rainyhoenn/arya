@@ -49,6 +49,16 @@ export async function POST(request: NextRequest) {
       dateUpdated,
     });
 
+    // Log the activity
+    conrodDB.createActivityLog({
+      action: 'CREATE',
+      module: 'pre-production',
+      entityId: newItem.id,
+      entityName: name,
+      description: `Created pre-production item: ${name}`,
+      details: `Type: ${type}, Quantity: ${quantity}${size ? `, Size: ${size}` : ''}${variant ? `, Variant: ${variant}` : ''}`
+    });
+
     return NextResponse.json({ success: true, data: newItem }, { status: 201 });
   } catch (error) {
     console.error("Error creating pre-production item:", error);

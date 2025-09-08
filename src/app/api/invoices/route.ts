@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validate required fields
-    const { invoiceNo, customerId, products } = body;
+    const { invoiceNo, customerId, products, transport } = body;
 
     if (!invoiceNo || !customerId || !products || !Array.isArray(products) || products.length === 0) {
       return NextResponse.json(
@@ -66,16 +66,31 @@ export async function POST(request: NextRequest) {
       totalAmount: product.quantity * product.amountPerUnit
     }));
 
+    // Get customer information for logging
+    const customer = conrodDB.getCustomerById(parseInt(customerId));
+    const customerName = customer ? customer.name : `Customer ID ${customerId}`;
+
     // Create the invoice
     const newInvoice = conrodDB.createInvoice(
       {
         invoiceNo,
         customerId: parseInt(customerId),
         totalAmount,
-        status: 'draft'
+        status: 'draft',
+        transport
       },
       invoiceItems
     );
+
+    // Log invoice creation
+    conrodDB.createActivityLog({
+      action: 'CREATE',
+      module: 'billing',
+      entityId: newInvoice.id,
+      entityName: invoiceNo,
+      description: `Created invoice ${invoiceNo} for ${customerName}`,
+      details: `Total Amount: ₹${totalAmount.toFixed(2)}, Products: ${products.length} items`
+    });
 
     // Deduct inventory from conrod assemblies
     const inventoryDeductions = [];
@@ -96,6 +111,16 @@ export async function POST(request: NextRequest) {
             productName: product.productName,
             quantityDeducted: product.quantity,
             remainingQuantity: updatedAssembly.quantity
+          });
+
+          // Log inventory deduction for billing
+          conrodDB.createActivityLog({
+            action: 'DEDUCT',
+            module: 'billing',
+            entityId: product.productId,
+            entityName: product.productName,
+            description: `Inventory deducted for invoice ${invoiceNo}`,
+            details: `Product: ${product.productName}, Deducted: ${product.quantity}, Remaining: ${updatedAssembly.quantity}, Unit Price: ₹${product.amountPerUnit}`
           });
         }
       }

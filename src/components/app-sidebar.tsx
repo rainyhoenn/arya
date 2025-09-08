@@ -34,6 +34,10 @@ import {
 const data = {
   navMain: [
     {
+      title: "Activity Logs",
+      url: "/dashboard/activity-logs",
+    },
+    {
       title: "Pre Production",
       url: "/dashboard/pre-production",
     },

@@ -5,7 +5,6 @@ import {
   ColumnDef,
   ColumnFiltersState,
   SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -57,6 +56,8 @@ export type Invoice = {
   totalAmount: number
   status: 'draft' | 'paid' | 'cancelled'
   createdAt: string
+  transport?: string
+  customerGstNo?: string
   items?: InvoiceItem[]
 }
 
@@ -294,7 +295,6 @@ export default function BillingHistoryPage() {
   const [error, setError] = React.useState<string | null>(null)
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
 
   const fetchInvoices = async () => {
@@ -501,6 +501,7 @@ export default function BillingHistoryPage() {
             <div style="margin-bottom: 5px;"><strong>${invoice.customerName}</strong></div>
             <div>
               [Customer Address]<br>
+              ${invoice.customerGstNo ? `<strong>GST No.: </strong>${invoice.customerGstNo}` : ''}
             </div>
           </div>
         </td>
@@ -511,7 +512,7 @@ export default function BillingHistoryPage() {
     <table style="border-collapse: collapse; margin-top: -1px;">
       <tr>
         <td style="width: 15%;" class="section-header">TRANSPORTER</td>
-        <td style="width: 50%;"></td>
+        <td style="width: 50%;">${invoice.transport || ''}</td>
         <td style="width: 10%; text-align: center;" class="section-header">LR./RR.<br>NO.</td>
         <td style="width: 25%;"></td>
       </tr>
@@ -671,7 +672,7 @@ export default function BillingHistoryPage() {
               <td>P.L.A. No.: 170 / 87 / 97</td>
             </tr>
             <tr>
-              <td>GST No.:</td>
+              <td>GST No.: ${invoice.customerGstNo || ''}</td>
               <td>Name of Excisable Commodity : Parts & Accessories of Vehicles</td>
             </tr>
             <tr>
@@ -684,7 +685,7 @@ export default function BillingHistoryPage() {
             </tr>
             <tr>
               <td>Delivery Challan No. & Date</td>
-              <td></td>
+              <td>Mode of Transport: ${invoice.transport || ''}</td>
             </tr>
           </table>
 
@@ -815,12 +816,10 @@ export default function BillingHistoryPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
-      columnVisibility,
       rowSelection,
     },
   })
@@ -848,7 +847,7 @@ export default function BillingHistoryPage() {
                 )}
                 
                 <div className="w-full space-y-4 py-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center">
                     <Input
                       placeholder="Filter invoices..."
                       value={(table.getColumn("invoiceNo")?.getFilterValue() as string) ?? ""}
@@ -857,32 +856,6 @@ export default function BillingHistoryPage() {
                       }
                       className="max-w-sm"
                     />
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                          Columns <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {table
-                          .getAllColumns()
-                          .filter((column) => column.getCanHide())
-                          .map((column) => {
-                            return (
-                              <DropdownMenuCheckboxItem
-                                key={column.id}
-                                className="capitalize"
-                                checked={column.getIsVisible()}
-                                onCheckedChange={(value) =>
-                                  column.toggleVisibility(!!value)
-                                }
-                              >
-                                {column.id}
-                              </DropdownMenuCheckboxItem>
-                            )
-                          })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                   
                   <div className="rounded-md border">

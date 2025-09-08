@@ -44,6 +44,7 @@ export interface InvoiceRecord {
   customerId: number;
   totalAmount: number;
   status: 'draft' | 'paid' | 'cancelled';
+  transport?: string;
   createdAt: string;
 }
 
@@ -55,6 +56,18 @@ export interface InvoiceItemRecord {
   quantity: number;
   amountPerUnit: number;
   totalAmount: number;
+}
+
+export interface ActivityLogRecord {
+  id: number;
+  action: string;
+  module: 'pre-production' | 'conrod-assembly' | 'billing';
+  entityId?: number;
+  entityName?: string;
+  description: string;
+  details?: string;
+  userId?: string;
+  createdAt: string;
 }
 
 class ConrodDatabase {
@@ -118,6 +131,9 @@ class ConrodDatabase {
 
     // Migrate customers table to add new columns
     this.migrateCustomersTable();
+    
+    // Migrate invoices table to add transport column
+    this.migrateInvoicesTable();
 
     // Create invoices table if it doesn't exist
     this.db.exec(`
@@ -127,6 +143,7 @@ class ConrodDatabase {
         customerId INTEGER NOT NULL,
         totalAmount REAL NOT NULL,
         status TEXT NOT NULL DEFAULT 'draft',
+        transport TEXT,
         createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (customerId) REFERENCES customers (id)
       )
@@ -143,6 +160,21 @@ class ConrodDatabase {
         amountPerUnit REAL NOT NULL,
         totalAmount REAL NOT NULL,
         FOREIGN KEY (invoiceId) REFERENCES invoices (id)
+      )
+    `);
+
+    // Create activity_logs table if it doesn't exist
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        action TEXT NOT NULL,
+        module TEXT NOT NULL CHECK (module IN ('pre-production', 'conrod-assembly', 'billing')),
+        entityId INTEGER,
+        entityName TEXT,
+        description TEXT NOT NULL,
+        details TEXT,
+        userId TEXT,
+        createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -186,6 +218,22 @@ class ConrodDatabase {
       }
     } catch (error) {
       console.error("Error during customers table migration:", error);
+    }
+  }
+
+  private migrateInvoicesTable() {
+    try {
+      // Check if transport column exists
+      const columns = this.db.query("PRAGMA table_info(invoices)").all() as Array<{name: string}>;
+      const columnNames = columns.map(col => col.name);
+      
+      // Add missing transport column
+      if (!columnNames.includes('transport')) {
+        this.db.exec('ALTER TABLE invoices ADD COLUMN transport TEXT');
+        console.log('Added transport column to invoices table');
+      }
+    } catch (error) {
+      console.error("Error during invoices table migration:", error);
     }
   }
 
@@ -558,13 +606,13 @@ class ConrodDatabase {
   }
 
   // Invoice CRUD methods
-  getAllInvoices(): (InvoiceRecord & { customerName: string })[] {
+  getAllInvoices(): (InvoiceRecord & { customerName: string, customerGstNo: string })[] {
     const invoices = this.db.query(`
-      SELECT i.*, c.name as customerName 
+      SELECT i.*, c.name as customerName, c.gstNo as customerGstNo 
       FROM invoices i 
       JOIN customers c ON i.customerId = c.id 
       ORDER BY i.createdAt DESC
-    `).all() as (InvoiceRecord & { customerName: string })[];
+    `).all() as (InvoiceRecord & { customerName: string, customerGstNo: string })[];
 
     // For each invoice, get its items
     const invoicesWithItems = invoices.map(invoice => {
@@ -585,15 +633,16 @@ class ConrodDatabase {
 
   createInvoice(invoice: Omit<InvoiceRecord, "id" | "createdAt">, items: Omit<InvoiceItemRecord, "id" | "invoiceId">[]): InvoiceRecord {
     const insertInvoiceStmt = this.db.prepare(`
-      INSERT INTO invoices (invoiceNo, customerId, totalAmount, status)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO invoices (invoiceNo, customerId, totalAmount, status, transport)
+      VALUES (?, ?, ?, ?, ?)
     `);
 
     const result = insertInvoiceStmt.run(
       invoice.invoiceNo,
       invoice.customerId,
       invoice.totalAmount,
-      invoice.status
+      invoice.status,
+      invoice.transport || null
     );
 
     const invoiceId = result.lastInsertRowid as number;
@@ -644,6 +693,41 @@ class ConrodDatabase {
     const deleteInvoiceStmt = this.db.prepare("DELETE FROM invoices WHERE id = ?");
     const result = deleteInvoiceStmt.run(id);
     return result.changes > 0;
+  }
+
+  // Activity Log methods
+  createActivityLog(log: Omit<ActivityLogRecord, "id" | "createdAt">): ActivityLogRecord {
+    const insertStmt = this.db.prepare(`
+      INSERT INTO activity_logs (action, module, entityId, entityName, description, details, userId)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const result = insertStmt.run(
+      log.action,
+      log.module,
+      log.entityId || null,
+      log.entityName || null,
+      log.description,
+      log.details || null,
+      log.userId || null
+    );
+
+    const getStmt = this.db.prepare("SELECT * FROM activity_logs WHERE id = ?");
+    return getStmt.get(result.lastInsertRowid) as ActivityLogRecord;
+  }
+
+  getAllActivityLogs(): ActivityLogRecord[] {
+    return this.db.query("SELECT * FROM activity_logs ORDER BY createdAt DESC").all() as ActivityLogRecord[];
+  }
+
+  getActivityLogsByModule(module: ActivityLogRecord['module']): ActivityLogRecord[] {
+    const stmt = this.db.prepare("SELECT * FROM activity_logs WHERE module = ? ORDER BY createdAt DESC");
+    return stmt.all(module) as ActivityLogRecord[];
+  }
+
+  getActivityLogsByEntity(entityId: number): ActivityLogRecord[] {
+    const stmt = this.db.prepare("SELECT * FROM activity_logs WHERE entityId = ? ORDER BY createdAt DESC");
+    return stmt.all(entityId) as ActivityLogRecord[];
   }
 
   close() {

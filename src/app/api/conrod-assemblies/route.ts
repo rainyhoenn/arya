@@ -134,6 +134,35 @@ export async function POST(request: NextRequest) {
       dateUpdated,
     });
 
+    // Log the assembly creation activity
+    conrodDB.createActivityLog({
+      action: 'CREATE',
+      module: 'conrod-assembly',
+      entityId: newAssembly.id,
+      entityName: conrodType,
+      description: `Created conrod assembly: ${conrodType}`,
+      details: `Variant: ${variant}, Size: ${size}, Quantity: ${requestedQuantity}. Components used: ${requestedQuantity}x ${recipe.pinName} (${recipe.pinSize}), ${requestedQuantity}x ${recipe.ballBearingName} (${recipe.ballBearingVariant}, ${recipe.ballBearingSize})`
+    });
+
+    // Log inventory deduction activities
+    conrodDB.createActivityLog({
+      action: 'DEDUCT',
+      module: 'conrod-assembly',
+      entityId: requiredPin.id,
+      entityName: recipe.pinName,
+      description: `Deducted components for conrod assembly: ${conrodType}`,
+      details: `Pin: ${recipe.pinName} (${recipe.pinSize}) - Deducted: ${requestedQuantity}, Remaining: ${updatedPin.quantity}`
+    });
+
+    conrodDB.createActivityLog({
+      action: 'DEDUCT',
+      module: 'conrod-assembly',
+      entityId: requiredBallBearing.id,
+      entityName: recipe.ballBearingName,
+      description: `Deducted components for conrod assembly: ${conrodType}`,
+      details: `Ball Bearing: ${recipe.ballBearingName} (${recipe.ballBearingVariant}, ${recipe.ballBearingSize}) - Deducted: ${requestedQuantity}, Remaining: ${updatedBallBearing.quantity}`
+    });
+
     return NextResponse.json({ 
       success: true, 
       data: newAssembly,

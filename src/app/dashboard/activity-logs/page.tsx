@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, ChevronDown, Filter, Activity } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -34,31 +34,56 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { AddPreProductionItemDialog } from "@/components/add-preproduction-item-dialog"
-import { EditPreProductionItemDialog } from "@/components/edit-preproduction-item-dialog"
-import { PrintPreProductionDialog } from "@/components/print-preproduction-dialog"
 
-export type PreProductionItem = {
+export type ActivityLogItem = {
   id: number
-  name: string
-  type: string
-  size?: string
-  variant?: string
-  quantity: number
-  dateUpdated: string
-  createdAt?: string
+  action: string
+  module: 'pre-production' | 'conrod-assembly' | 'billing'
+  entityId?: number
+  entityName?: string
+  description: string
+  details?: string
+  userId?: string
+  createdAt: string
 }
 
-const getColumns = (
-  handleEditItem: () => void,
-  handleDeleteItem: (id: number) => void
-): ColumnDef<PreProductionItem>[] => [
+const getActionColor = (action: string) => {
+  switch (action.toUpperCase()) {
+    case 'CREATE':
+      return 'bg-green-500'
+    case 'UPDATE':
+      return 'bg-blue-500'
+    case 'DELETE':
+      return 'bg-red-500'
+    case 'DEDUCT':
+      return 'bg-orange-500'
+    default:
+      return 'bg-gray-500'
+  }
+}
+
+const getModuleColor = (module: string) => {
+  switch (module) {
+    case 'pre-production':
+      return 'bg-purple-100 text-purple-800'
+    case 'conrod-assembly':
+      return 'bg-blue-100 text-blue-800'
+    case 'billing':
+      return 'bg-green-100 text-green-800'
+    default:
+      return 'bg-gray-100 text-gray-800'
+  }
+}
+
+const getColumns = (): ColumnDef<ActivityLogItem>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -82,171 +107,147 @@ const getColumns = (
     enableHiding: false,
   },
   {
-    accessorKey: "name",
+    accessorKey: "createdAt",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Name
+          Timestamp
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
-    cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+    cell: ({ row }) => {
+      const timestamp = new Date(row.getValue("createdAt"))
+      return (
+        <div className="flex flex-col">
+          <div className="font-medium">{timestamp.toLocaleDateString()}</div>
+          <div className="text-sm text-muted-foreground">{timestamp.toLocaleTimeString()}</div>
+        </div>
+      )
+    },
   },
   {
-    accessorKey: "type",
+    accessorKey: "action",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Type
+          Action
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const action = row.getValue("action") as string
+      return (
+        <Badge className={`${getActionColor(action)} text-white`}>
+          {action}
+        </Badge>
+      )
+    },
+  },
+  {
+    accessorKey: "module",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Module
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const module = row.getValue("module") as string
+      return (
+        <Badge className={getModuleColor(module)}>
+          {module.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+        </Badge>
+      )
+    },
+  },
+  {
+    accessorKey: "description",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Description
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
     cell: ({ row }) => {
       const item = row.original
-      let typeDisplay = item.type
-      if (item.size && item.size !== "STD") {
-        typeDisplay += ` (Size: ${item.size})`
-      }
-      if (item.variant && item.variant !== "Local") {
-        typeDisplay += ` (${item.variant})`
-      }
-      return <div>{typeDisplay}</div>
-    },
-  },
-  {
-    accessorKey: "quantity",
-    header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Quantity
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <div>
+          <div className="font-medium">{item.description}</div>
+          {item.entityName && (
+            <div className="text-sm text-muted-foreground">Entity: {item.entityName}</div>
+          )}
+        </div>
       )
     },
-    cell: ({ row }) => {
-      const quantity = parseInt(row.getValue("quantity"))
-      return <div className="text-right font-medium">{quantity.toLocaleString()}</div>
-    },
   },
   {
-    accessorKey: "dateUpdated",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date Updated
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div>{row.getValue("dateUpdated")}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
+    accessorKey: "details",
+    header: "Details",
     cell: ({ row }) => {
-      const item = row.original
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <EditPreProductionItemDialog item={item} onEditItem={handleEditItem}>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                Edit item
-              </DropdownMenuItem>
-            </EditPreProductionItemDialog>
-            <DropdownMenuItem 
-              className="text-destructive"
-              onClick={() => handleDeleteItem(item.id)}
-            >
-              Delete item
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      const details = row.getValue("details") as string
+      return details ? (
+        <div className="text-sm text-muted-foreground max-w-xs truncate" title={details}>
+          {details}
+        </div>
+      ) : (
+        <span className="text-muted-foreground">-</span>
       )
     },
   },
 ]
 
-export default function PreProductionPage() {
-  const [data, setData] = React.useState<PreProductionItem[]>([])
+export default function ActivityLogsPage() {
+  const [data, setData] = React.useState<ActivityLogItem[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([{ id: "createdAt", desc: true }])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [rowSelection, setRowSelection] = React.useState({})
+  const [moduleFilter, setModuleFilter] = React.useState<string>("")
 
-  const fetchPreProductionItems = async () => {
+  const fetchActivityLogs = async (module?: string) => {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await fetch("/api/pre-production")
+      const url = module && module !== "all" ? `/api/activity-logs?module=${module}` : "/api/activity-logs"
+      const response = await fetch(url)
       const result = await response.json()
       
       if (!result.success) {
-        throw new Error(result.error || "Failed to fetch pre-production items")
+        throw new Error(result.error || "Failed to fetch activity logs")
       }
       
       setData(result.data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch pre-production items")
+      setError(err instanceof Error ? err.message : "Failed to fetch activity logs")
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleAddItem = () => {
-    fetchPreProductionItems() // Refresh data after adding
-  }
-
-  const handleEditItem = () => {
-    fetchPreProductionItems() // Refresh data after editing
-  }
-
-  const handleDeleteItem = async (itemId: number) => {
-    try {
-      const response = await fetch(`/api/pre-production/${itemId}`, {
-        method: "DELETE",
-      })
-      
-      const result = await response.json()
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to delete item")
-      }
-      
-      // Refresh the data
-      fetchPreProductionItems()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete item")
-    }
-  }
-
   React.useEffect(() => {
-    fetchPreProductionItems()
-  }, [])
+    fetchActivityLogs(moduleFilter)
+  }, [moduleFilter])
 
-  const columns = getColumns(handleEditItem, handleDeleteItem)
+  const columns = getColumns()
 
   const table = useReactTable({
     data,
@@ -265,6 +266,7 @@ export default function PreProductionPage() {
     },
   })
 
+
   return (
     <SidebarProvider
       style={
@@ -276,38 +278,48 @@ export default function PreProductionPage() {
     >
       <AppSidebar variant="inset" />
       <SidebarInset>
-        <SiteHeader 
-          title="Pre-Production Inventory" 
-          actions={
-            <div className="flex gap-2">
-              <PrintPreProductionDialog items={data}>
-                <Button size="sm" variant="outline">
-                  Print Items
-                </Button>
-              </PrintPreProductionDialog>
-              <AddPreProductionItemDialog onAddItem={handleAddItem}>
-                <Button size="sm">
-                  Add Item
-                </Button>
-              </AddPreProductionItemDialog>
-            </div>
-          }
-        />
+        <SiteHeader title="Activity Logs" />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="px-4 lg:px-6">
                 
+
                 <div className="w-full space-y-4 py-4">
-                  <div className="flex items-center">
-                    <Input
-                      placeholder="Filter items..."
-                      value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-                      onChange={(event) =>
-                        table.getColumn("name")?.setFilterValue(event.target.value)
-                      }
-                      className="max-w-sm"
-                    />
+                  <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Filter activities..."
+                        value={(table.getColumn("description")?.getFilterValue() as string) ?? ""}
+                        onChange={(event) =>
+                          table.getColumn("description")?.setFilterValue(event.target.value)
+                        }
+                        className="max-w-sm"
+                      />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline">
+                            <Filter className="mr-2 h-4 w-4" />
+                            Module: {moduleFilter || "All"}
+                            <ChevronDown className="ml-2 h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuLabel>Filter by Module</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setModuleFilter("")}>
+                            All Modules
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setModuleFilter("pre-production")}>
+                            Pre-Production
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setModuleFilter("conrod-assembly")}>
+                            Conrod Assembly
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setModuleFilter("billing")}>
+                            Billing
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                   </div>
                   
                   <div className="rounded-md border">
@@ -337,7 +349,10 @@ export default function PreProductionPage() {
                               colSpan={columns.length}
                               className="h-24 text-center"
                             >
-                              Loading pre-production items...
+                              <div className="flex items-center justify-center">
+                                <Activity className="mr-2 h-4 w-4 animate-spin" />
+                                Loading activity logs...
+                              </div>
                             </TableCell>
                           </TableRow>
                         ) : error ? (
@@ -371,7 +386,7 @@ export default function PreProductionPage() {
                               colSpan={columns.length}
                               className="h-24 text-center"
                             >
-                              No pre-production items found.
+                              No activity logs found.
                             </TableCell>
                           </TableRow>
                         )}
