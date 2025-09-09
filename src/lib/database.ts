@@ -110,9 +110,6 @@ class ConrodDatabase {
       )
     `);
 
-    // Migrate existing table to add missing columns if they don't exist
-    this.migrateConrodsTable();
-
     // Create pre_production table if it doesn't exist
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS pre_production (
@@ -151,15 +148,6 @@ class ConrodDatabase {
         createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
-
-    // Migrate customers table to add new columns
-    this.migrateCustomersTable();
-    
-    // Migrate invoices table to add transport column
-    this.migrateInvoicesTable();
-
-    // Migrate conrod assemblies from pre_production to conrod_assemblies table
-    this.migrateConrodAssemblies();
 
     // Create invoices table if it doesn't exist
     this.db.exec(`
@@ -206,111 +194,9 @@ class ConrodDatabase {
 
   }
 
-  private migrateCustomersTable() {
-    try {
-      // Check if phoneNumber and gstNo columns exist
-      const columns = this.db.query("PRAGMA table_info(customers)").all() as Array<{name: string}>;
-      const columnNames = columns.map(col => col.name);
-      
-      // Add missing columns
-      const columnsToAdd = [
-        { name: 'phoneNumber', sql: 'ALTER TABLE customers ADD COLUMN phoneNumber TEXT' },
-        { name: 'gstNo', sql: 'ALTER TABLE customers ADD COLUMN gstNo TEXT' }
-      ];
 
-      for (const column of columnsToAdd) {
-        if (!columnNames.includes(column.name)) {
-          this.db.exec(column.sql);
-          console.log(`Added column ${column.name} to customers table`);
-        }
-      }
 
-      // Migrate old phone and email columns to phoneNumber if they exist
-      if (columnNames.includes('phone') && !columnNames.includes('phoneNumber')) {
-        this.db.exec('UPDATE customers SET phoneNumber = phone WHERE phone IS NOT NULL');
-        console.log('Migrated phone data to phoneNumber column');
-      }
-    } catch (error) {
-      console.error("Error during customers table migration:", error);
-    }
-  }
 
-  private migrateInvoicesTable() {
-    try {
-      // Check if transport column exists
-      const columns = this.db.query("PRAGMA table_info(invoices)").all() as Array<{name: string}>;
-      const columnNames = columns.map(col => col.name);
-      
-      // Add missing transport column
-      if (!columnNames.includes('transport')) {
-        this.db.exec('ALTER TABLE invoices ADD COLUMN transport TEXT');
-        console.log('Added transport column to invoices table');
-      }
-    } catch (error) {
-      console.error("Error during invoices table migration:", error);
-    }
-  }
-
-  private migrateConrodsTable() {
-    try {
-      // Check if variant and size columns exist by getting table info
-      const columns = this.db.query("PRAGMA table_info(conrods)").all() as Array<{name: string}>;
-      const columnNames = columns.map(col => col.name);
-      
-      // Add missing columns (without NOT NULL constraint since we can't add that to existing tables)
-      const columnsToAdd = [
-        { name: 'conrodVariant', sql: 'ALTER TABLE conrods ADD COLUMN conrodVariant TEXT' },
-        { name: 'conrodSize', sql: 'ALTER TABLE conrods ADD COLUMN conrodSize TEXT' },
-        { name: 'pinSize', sql: 'ALTER TABLE conrods ADD COLUMN pinSize TEXT' },
-        { name: 'ballBearingVariant', sql: 'ALTER TABLE conrods ADD COLUMN ballBearingVariant TEXT' },
-        { name: 'ballBearingSize', sql: 'ALTER TABLE conrods ADD COLUMN ballBearingSize TEXT' },
-        { name: 'amount', sql: 'ALTER TABLE conrods ADD COLUMN amount INTEGER DEFAULT 0' }
-      ];
-
-      for (const column of columnsToAdd) {
-        if (!columnNames.includes(column.name)) {
-          this.db.exec(column.sql);
-          console.log(`Added column ${column.name} to conrods table`);
-        }
-      }
-    } catch (error) {
-      console.error("Error during table migration:", error);
-    }
-  }
-
-  private migrateConrodAssemblies() {
-    try {
-      // Check if we need to migrate conrod assemblies from pre_production
-      const conrodAssemblies = this.db.query(
-        "SELECT * FROM pre_production WHERE type = 'Conrod'"
-      ).all() as PreProductionRecord[];
-
-      if (conrodAssemblies.length > 0) {
-        console.log(`Migrating ${conrodAssemblies.length} conrod assemblies to separate table`);
-        
-        for (const assembly of conrodAssemblies) {
-          // Insert into conrod_assemblies table
-          this.db.query(`
-            INSERT INTO conrod_assemblies (name, variant, size, quantity, dateUpdated, createdAt)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `).run(
-            assembly.name,
-            assembly.variant || '',
-            assembly.size || '',
-            assembly.quantity,
-            assembly.dateUpdated,
-            assembly.createdAt
-          );
-        }
-
-        // Remove conrod assemblies from pre_production table
-        this.db.exec("DELETE FROM pre_production WHERE type = 'Conrod'");
-        console.log('Conrod assemblies migration completed');
-      }
-    } catch (error) {
-      console.error("Error during conrod assemblies migration:", error);
-    }
-  }
 
 
   getAllConrods(): ConrodRecord[] {
