@@ -1,10 +1,10 @@
 @echo off
-REM Double-click this file to start Arya development server on Windows
+REM Double-click this file to start ERP development server on Windows
 
 REM Ensure working directory is project root
 pushd "%~dp0"
 
-echo Arya - Setting up and starting the development server...
+echo ERP - Setting up and starting the development server...
 echo.
 
 REM Check if Bun is installed
@@ -106,7 +106,7 @@ if "%NEEDS_SETUP%"=="1" (
     echo.
 )
 
-echo Starting Arya development server...
+echo Starting ERP development server...
 echo.
 echo The application will be available at:
 echo Local: http://localhost:3000
@@ -114,62 +114,24 @@ echo.
 echo To stop the server, close this window or press Ctrl+C
 echo.
 
-REM Start development server and monitor it
-echo Starting development server...
-start /min "Arya-Dev-Server" cmd /k "bun --bun run dev"
-REM Give server time to initialize
-timeout /t 3 /nobreak >nul
-
-REM Wait for server to start and check if it's responding
-echo Waiting for development server to start...
-set /a attempts=0
-:check_server
-set /a attempts+=1
-if %attempts% gtr 30 (
-    echo Timeout: Server took too long to start
-    goto :run_normally
-)
-
-REM Check if development server is responding
-powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:3000' -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>nul
-if %errorlevel% equ 0 (
-    echo ✅ Development server is running
-    echo.
-    echo 🌐 Opening browser...
-    start http://localhost:3000
-    goto :server_ready
-) else (
-    echo Checking server... (%attempts%/30^)
-    timeout /t 2 /nobreak >nul
-    goto :check_server
-)
-
-:run_normally
-echo Running server normally...
+echo Starting ERP development server...
 echo.
-echo If you encounter module resolution errors, try:
-echo 1. Delete node_modules folder and run this script again
-echo 2. Or run: bun install --force
+echo The application will be available at:
+echo Local: http://localhost:3000
+echo.
+echo 🌐 Opening browser in 3 seconds...
+echo To stop the server, press Ctrl+C
+echo.
+
+REM Open browser after a short delay (in background)
+start "" cmd /c "timeout /t 3 /nobreak >nul && start http://localhost:3000"
+
+REM Start development server directly in this window
+echo ================================================================
+echo                    ERP DEVELOPMENT SERVER
+echo ================================================================
 echo.
 bun --bun run dev
-goto :end
-
-:server_ready
-echo.
-echo ✅ Development server is running and browser opened!
-echo.
-echo The server is running in a separate window titled "Arya-Dev-Server"
-echo To stop the server: Close that window or press Ctrl+C in it
-echo.
-echo This window will now close. The application will continue running
-echo in the background until you stop the server window.
-echo.
-echo 🎉 Happy coding with Arya!
-echo.
-timeout /t 5 /nobreak >nul
-goto :end
 
 :end
-echo Press any key to exit...
-pause > nul
 popd
