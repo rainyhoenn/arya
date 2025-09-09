@@ -146,19 +146,22 @@ const getColumns = (
     accessorKey: "totalAmount",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Total Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="w-32 text-center">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="w-full justify-center"
+          >
+            Total Amount
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       )
     },
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("totalAmount"))
       return (
-        <div className="text-right font-medium">
+        <div className="w-32 text-center font-medium">
           ₹{amount.toFixed(2)}
         </div>
       )
@@ -168,18 +171,21 @@ const getColumns = (
     accessorKey: "createdAt",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="w-28 text-center">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="w-full justify-center"
+          >
+            Date
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       )
     },
     cell: ({ row }) => {
       const date = new Date(row.getValue("createdAt"))
-      return <div>{date.toLocaleDateString()}</div>
+      return <div className="w-28 text-center">{date.toLocaleDateString()}</div>
     },
   },
   {
@@ -323,8 +329,8 @@ export default function BillingHistoryPage() {
 
     const dateStr = new Date(invoice.createdAt).toLocaleDateString('en-GB')
     const subTotal = invoice.totalAmount
-    const cgst = subTotal * 0.08 // 8% CGST
-    const sgst = subTotal * 0.08 // 8% SGST
+    const cgst = subTotal * 0.14 // 14% CGST
+    const sgst = subTotal * 0.14 // 14% SGST
     const grandTotal = subTotal + cgst + sgst
     const invoiceNo = invoice.invoiceNo
     const amountInWords = amountToWordsIndian(grandTotal)
@@ -562,12 +568,12 @@ ${Array.from({length: 10}, (_, index) => {
       </tr>
       <tr>
         <td colspan="5" style="border: none;"></td>
-        <td style="border: 1px solid black; text-align: right;">CGST @ 8%</td>
+        <td style="border: 1px solid black; text-align: right;">CGST @ 14%</td>
         <td style="border: 1px solid black; text-align: right;">₹${cgst.toFixed(2)}</td>
       </tr>
       <tr>
         <td colspan="5" style="border: none;"></td>
-        <td style="border: 1px solid black; text-align: right;">SGST @ 8%</td>
+        <td style="border: 1px solid black; text-align: right;">SGST @ 14%</td>
         <td style="border: 1px solid black; text-align: right;">₹${sgst.toFixed(2)}</td>
       </tr>
       <tr>
@@ -611,8 +617,8 @@ ${Array.from({length: 10}, (_, index) => {
 
     const dateStr = new Date(invoice.createdAt).toLocaleDateString('en-GB')
     const subTotal = invoice.totalAmount
-    const cgst = subTotal * 0.08 // 8% CGST
-    const sgst = subTotal * 0.08 // 8% SGST
+    const cgst = subTotal * 0.14 // 14% CGST
+    const sgst = subTotal * 0.14 // 14% SGST
     const grandTotal = subTotal + cgst + sgst
     const invoiceNo = invoice.invoiceNo
     const amountInWords = amountToWordsIndian(grandTotal)
@@ -757,7 +763,7 @@ ${Array.from({length: 9}, (_, index) => {
               <td style="border: 1px solid black;"></td>
             </tr>
             <tr>
-              <td colspan="3" style="border: 1px solid black;">Mode of Transport:</td>
+              <td colspan="3" style="border: 1px solid black;">Mode of Transport: ${invoice.transport || ''}</td>
               <td colspan="2" style="border: 1px solid black;">Veh. No.:</td>
               <td style="border: 1px solid black;"></td>
               <td style="border: 1px solid black;"></td>
@@ -769,12 +775,12 @@ ${Array.from({length: 9}, (_, index) => {
             </tr>
             <tr>
               <td colspan="5" style="border: 1px solid black;">Amount in words: ${amountInWords}</td>
-              <td style="border: 1px solid black; text-align: right;">CGST @ 8%</td>
+              <td style="border: 1px solid black; text-align: right;">CGST @ 14%</td>
               <td style="border: 1px solid black;">${cgst.toFixed(2)}</td>
             </tr>
             <tr>
               <td colspan="5" style="border: 1px solid black;"></td>
-              <td style="border: 1px solid black; text-align: right;">SGST @ 8%</td>
+              <td style="border: 1px solid black; text-align: right;">SGST @ 14%</td>
               <td style="border: 1px solid black;">${sgst.toFixed(2)}</td>
             </tr>
             <tr>

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { ConrodItem } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,24 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-export type ConrodItem = {
-  id: number
-  serialNumber: string
-  conrodName: string
-  conrodVariant: string
-  conrodSize: string
-  smallEndDiameter: number
-  bigEndDiameter: number
-  centerDistance: number
-  pinName: string
-  pinSize: string
-  ballBearingName: string
-  ballBearingVariant: string
-  ballBearingSize: string
-  amount?: number
-  createdAt?: string
-}
 
 interface EditConrodDialogProps {
   item: ConrodItem

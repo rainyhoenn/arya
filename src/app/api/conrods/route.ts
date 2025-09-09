@@ -39,9 +39,6 @@ export async function POST(request: NextRequest) {
       !conrodName ||
       !conrodVariant ||
       !conrodSize ||
-      smallEndDiameter === undefined ||
-      bigEndDiameter === undefined ||
-      centerDistance === undefined ||
       !pinName ||
       !pinSize ||
       !ballBearingName ||
@@ -59,9 +56,9 @@ export async function POST(request: NextRequest) {
       conrodName,
       conrodVariant,
       conrodSize,
-      smallEndDiameter: parseFloat(smallEndDiameter),
-      bigEndDiameter: parseFloat(bigEndDiameter),
-      centerDistance: parseFloat(centerDistance),
+      smallEndDiameter: smallEndDiameter ? parseFloat(smallEndDiameter) : undefined,
+      bigEndDiameter: bigEndDiameter ? parseFloat(bigEndDiameter) : undefined,
+      centerDistance: centerDistance ? parseFloat(centerDistance) : undefined,
       pinName,
       pinSize,
       ballBearingName,

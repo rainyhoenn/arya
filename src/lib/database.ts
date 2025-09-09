@@ -6,9 +6,9 @@ export interface ConrodRecord {
   conrodName: string;
   conrodVariant: string;
   conrodSize: string;
-  smallEndDiameter: number;
-  bigEndDiameter: number;
-  centerDistance: number;
+  smallEndDiameter?: number;
+  bigEndDiameter?: number;
+  centerDistance?: number;
   pinName: string;
   pinSize: string;
   ballBearingName: string;
@@ -87,9 +87,9 @@ class ConrodDatabase {
         conrodName TEXT NOT NULL,
         conrodVariant TEXT NOT NULL,
         conrodSize TEXT NOT NULL,
-        smallEndDiameter REAL NOT NULL,
-        bigEndDiameter REAL NOT NULL,
-        centerDistance REAL NOT NULL,
+        smallEndDiameter REAL,
+        bigEndDiameter REAL,
+        centerDistance REAL,
         pinName TEXT NOT NULL,
         pinSize TEXT NOT NULL,
         ballBearingName TEXT NOT NULL,
@@ -178,18 +178,6 @@ class ConrodDatabase {
       )
     `);
 
-    // Check if we need to seed initial data
-    const count = this.db.query("SELECT COUNT(*) as count FROM conrods").get() as { count: number };
-    
-    if (count.count === 0) {
-      this.seedInitialData();
-    }
-
-    // Seed customers if empty
-    const customerCount = this.db.query("SELECT COUNT(*) as count FROM customers").get() as { count: number };
-    if (customerCount.count === 0) {
-      this.seedCustomers();
-    }
   }
 
   private migrateCustomersTable() {
@@ -264,152 +252,6 @@ class ConrodDatabase {
     }
   }
 
-  private seedInitialData() {
-    const initialData = [
-      {
-        serialNumber: "CR001",
-        conrodName: "Honda CB150R Conrod",
-        conrodVariant: "Standard",
-        conrodSize: "Standard",
-        smallEndDiameter: 15.5,
-        bigEndDiameter: 42.0,
-        centerDistance: 110.5,
-        pinName: "PIN-CB150-001",
-        pinSize: "Standard",
-        ballBearingName: "BB-6201-2RS",
-        ballBearingVariant: "Standard",
-        ballBearingSize: "Standard",
-      },
-      {
-        serialNumber: "CR002",
-        conrodName: "Yamaha YZF-R15 Conrod",
-        conrodVariant: "NRB",
-        conrodSize: "7",
-        smallEndDiameter: 14.8,
-        bigEndDiameter: 40.5,
-        centerDistance: 108.2,
-        pinName: "PIN-YZF-002",
-        pinSize: "7",
-        ballBearingName: "BB-6200-2RS",
-        ballBearingVariant: "NRB",
-        ballBearingSize: "7",
-      },
-      {
-        serialNumber: "CR003",
-        conrodName: "Bajaj Pulsar 200NS Conrod",
-        conrodVariant: "Standard",
-        conrodSize: "5",
-        smallEndDiameter: 16.0,
-        bigEndDiameter: 44.0,
-        centerDistance: 115.0,
-        pinName: "PIN-P200-003",
-        pinSize: "5",
-        ballBearingName: "BB-6202-2RS",
-        ballBearingVariant: "Standard",
-        ballBearingSize: "5",
-      },
-      {
-        serialNumber: "CR004",
-        conrodName: "KTM Duke 200 Conrod",
-        conrodVariant: "NRB",
-        conrodSize: "3",
-        smallEndDiameter: 15.2,
-        bigEndDiameter: 41.8,
-        centerDistance: 112.3,
-        pinName: "PIN-KTM-004",
-        pinSize: "3",
-        ballBearingName: "BB-6201-Z",
-        ballBearingVariant: "NRB",
-        ballBearingSize: "3",
-      },
-      {
-        serialNumber: "CR005",
-        conrodName: "Royal Enfield Classic 350 Conrod",
-        conrodVariant: "Standard",
-        conrodSize: "6",
-        smallEndDiameter: 18.0,
-        bigEndDiameter: 48.0,
-        centerDistance: 125.5,
-        pinName: "PIN-RE350-005",
-        pinSize: "6",
-        ballBearingName: "BB-6203-2RS",
-        ballBearingVariant: "Standard",
-        ballBearingSize: "6",
-      },
-    ];
-
-    const insertStmt = this.db.prepare(`
-      INSERT INTO conrods (serialNumber, conrodName, conrodVariant, conrodSize, smallEndDiameter, bigEndDiameter, centerDistance, pinName, pinSize, ballBearingName, ballBearingVariant, ballBearingSize, amount)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    for (const conrod of initialData) {
-      insertStmt.run(
-        conrod.serialNumber,
-        conrod.conrodName,
-        conrod.conrodVariant,
-        conrod.conrodSize,
-        conrod.smallEndDiameter,
-        conrod.bigEndDiameter,
-        conrod.centerDistance,
-        conrod.pinName,
-        conrod.pinSize,
-        conrod.ballBearingName,
-        conrod.ballBearingVariant,
-        conrod.ballBearingSize,
-        5 // default amount for seed data
-      );
-    }
-  }
-
-  private seedCustomers() {
-    const initialCustomers = [
-      {
-        name: "John Smith",
-        address: "123 Main St, New York, NY 10001",
-        phoneNumber: "(555) 123-4567",
-        gstNo: "GST123456789"
-      },
-      {
-        name: "Sarah Johnson",
-        address: "456 Oak Ave, Los Angeles, CA 90210",
-        phoneNumber: "(555) 987-6543",
-        gstNo: "GST987654321"
-      },
-      {
-        name: "Mike Davis",
-        address: "789 Pine Rd, Chicago, IL 60601",
-        phoneNumber: "(555) 456-7890",
-        gstNo: "GST456789123"
-      },
-      {
-        name: "Emily Wilson",
-        address: "321 Elm St, Houston, TX 77001",
-        phoneNumber: "(555) 234-5678",
-        gstNo: "GST234567890"
-      },
-      {
-        name: "David Brown",
-        address: "654 Maple Dr, Phoenix, AZ 85001",
-        phoneNumber: "(555) 345-6789",
-        gstNo: "GST345678901"
-      }
-    ];
-
-    const insertStmt = this.db.prepare(`
-      INSERT INTO customers (name, address, phoneNumber, gstNo)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    for (const customer of initialCustomers) {
-      insertStmt.run(
-        customer.name,
-        customer.address,
-        customer.phoneNumber,
-        customer.gstNo
-      );
-    }
-  }
 
   getAllConrods(): ConrodRecord[] {
     return this.db.query("SELECT * FROM conrods ORDER BY createdAt DESC").all() as ConrodRecord[];
@@ -426,9 +268,9 @@ class ConrodDatabase {
       conrod.conrodName,
       conrod.conrodVariant,
       conrod.conrodSize,
-      conrod.smallEndDiameter,
-      conrod.bigEndDiameter,
-      conrod.centerDistance,
+      conrod.smallEndDiameter ?? null,
+      conrod.bigEndDiameter ?? null,
+      conrod.centerDistance ?? null,
       conrod.pinName,
       conrod.pinSize,
       conrod.ballBearingName,

@@ -122,7 +122,9 @@ const getColumns = (
     cell: ({ row }) => {
       const customer = row.original
       return (
-        <div>{customer.address}</div>
+        <div className="whitespace-normal break-words max-w-xs leading-tight">
+          {customer.address}
+        </div>
       )
     },
   },
