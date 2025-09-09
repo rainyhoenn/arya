@@ -59,6 +59,7 @@ export type Invoice = {
   transport?: string
   customerGstNo?: string
   customerPhoneNumber?: string
+  address?: string
   items?: InvoiceItem[]
 }
 
@@ -483,11 +484,9 @@ export default function BillingHistoryPage() {
           <table style="border-collapse: collapse; margin: 0; border-top: none;">
             <tr>
               <td style="width: 60%; border-right: 1px solid #000; border-top: 1px solid #000;">YOUR ORDER NO.</td>
-              <td style="width: 40%; border-top: 1px solid #000;">DATE</td>
             </tr>
             <tr>
-              <td style="height: 20px; border-right: 1px solid #000;"></td>
-              <td style="height: 20px;"></td>
+              <td style="height: 20px; border-right: 1px solid #000;">Telephonic</td>
             </tr>
           </table>
         </td>
@@ -497,20 +496,22 @@ export default function BillingHistoryPage() {
     <!-- Customer/Address Section with Packing & Documents -->
     <table style="border-collapse: collapse; margin-top: -1px;">
       <tr>
-        <td style="width: 65%; height: 120px;"></td>
-        <td style="width: 35%; vertical-align: top; padding: 10px; border-left: none;">
-          <div style="font-size: 13px; margin-top: 8px;">
-            <div><strong>Invoice No. : </strong>${invoiceNo}</div>
-            <div><strong>Dated : </strong>${dateStr}</div>
+        <td style="width: 65%; height: 120px; vertical-align: top; padding: 10px;">
+          <div style="font-size: 12px;">
+            <div style="margin-bottom: 5px;"><strong>To,</strong></div>
+            <div style="margin-bottom: 2px;"><strong>${invoice.customerName}</strong></div>
+            ${invoice.address ? `<div style="margin-bottom: 2px;">${invoice.address}</div>` : ''}
+            ${invoice.customerGstNo ? `<div style="margin-bottom: 2px;"><strong>GST No.: </strong>${invoice.customerGstNo}</div>` : ''}
+            ${invoice.customerPhoneNumber ? `<div><strong>Phone No.: </strong>${invoice.customerPhoneNumber}</div>` : ''}
+          </div>
+        </td>
+        <td style="width: 35%; vertical-align: top; padding: 4px; border-left: none;">
+          <div style="font-size: 13px; margin-top: 4px;">
+            <div><strong>Packaging Note No. / Delivery Challan No. </strong>${invoiceNo}</div>
           </div>
 
-          <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 8px;">
-            <div style="margin-bottom: 5px;"><strong>${invoice.customerName}</strong></div>
-            <div>
-              [Customer Address]<br>
-              ${invoice.customerGstNo ? `<strong>GST No.: </strong>${invoice.customerGstNo}<br>` : ''}
-              ${invoice.customerPhoneNumber ? `<strong>Phone No.: </strong>${invoice.customerPhoneNumber}` : ''}
-            </div>
+          <div style="margin-top: 4px; border-top: 1px dashed #ccc; padding-top: 4px;">
+            <div style="margin-bottom: 5px;"><strong>Documents Through</strong></div>
           </div>
         </td>
       </tr>
@@ -531,7 +532,7 @@ export default function BillingHistoryPage() {
       <tr>
         <td style="width: 5%; text-align: center;" class="section-header">SR.<br>NO.</td>
         <td style="width: 10%; text-align: center;" class="section-header">PART<br>NO.</td>
-        <td style="width: 40%;" class="description-header section-header">D E S C R I P T I O N</td>
+        <td style="width: 40%;" class="description-header section-header">DESCRIPTION</td>
         <td style="width: 10%; text-align: center;" class="section-header">UNIT</td>
         <td style="width: 10%; text-align: center;" class="section-header">QTY.</td>
         <td style="width: 10%; text-align: center;" class="section-header">RATE</td>
@@ -540,7 +541,7 @@ export default function BillingHistoryPage() {
       <tr>
         <td></td>
         <td></td>
-        <td>this is standard text</td>
+        <td><em>Conrods assembly suitable for O. E. fitting</em></td>
         <td></td>
         <td></td>
         <td></td>
@@ -577,12 +578,9 @@ ${Array.from({length: 10}, (_, index) => {
         <td style="border: 1px solid black; text-align: right;">₹${sgst.toFixed(2)}</td>
       </tr>
       <tr>
-        <td colspan="7" class="eo-text" style="border: 1px solid black; padding: 8px;">
+        <td colspan="5" class="eo-text" style="border: 1px solid black; padding: 8px;">
           Amount in Words: ${amountInWords}
         </td>
-      </tr>
-      <tr>
-        <td colspan="5" style="border: none;"></td>
         <td style="border: 1px solid black; text-align: right; font-weight: bold;">Total</td>
         <td style="border: 1px solid black; text-align: right; font-weight: bold;">₹${grandTotal.toFixed(2)}</td>
       </tr>
@@ -603,11 +601,9 @@ ${Array.from({length: 10}, (_, index) => {
     printWindow.document.write(html)
     printWindow.document.close()
 
-    // Wait a moment for content to load, then print
+    // Wait a moment for content to load, then focus
     setTimeout(() => {
       printWindow.focus()
-      printWindow.print()
-      printWindow.close()
     }, 500)
   }
 
@@ -664,7 +660,7 @@ ${Array.from({length: 10}, (_, index) => {
             </tr>
             <tr>
               <td>To, ${invoice.customerName}<br>
-                ${invoice.customerPhoneNumber ? `Phone No.: ${invoice.customerPhoneNumber}` : ''}</td>
+                ${invoice.address ? invoice.address : ''}</td>
               <td rowspan="1" style="font-size: 9px;">
                 *CLEARANCE FOR HOME CONSUMPTION /<br>
                 EXPORT NATURE FOR REMOVAL (e.g. Stock<br>
@@ -707,7 +703,7 @@ ${Array.from({length: 10}, (_, index) => {
             </tr>
             <tr>
               <td></td>
-              <td>this is standard text</td>
+              <td><em>Conrods assembly suitable for O. E. fitting</em></td>
               <td></td>
               <td></td>
               <td></td>
@@ -791,7 +787,7 @@ ${Array.from({length: 9}, (_, index) => {
             <tr>
               <td colspan="3" style="border: 1px solid black;">GST No.: 27AAACG4173B1Z0</td>
               <td style="border: 1px solid black; text-align: center; font-size: 11px;">Pre-authentication</td>
-              <td colspan="3" style="border: 1px solid black; text-align: center;">For Globe Accessories Pvt. Ltd.<br><br><br>Authorised Signatories</td>
+              <td colspan="3" style="border: 1px solid black; text-align: center;">For Globe Accessories Pvt. Ltd.<br><br><br><br></td>
             </tr>
           </table>
         </div>
@@ -801,11 +797,9 @@ ${Array.from({length: 9}, (_, index) => {
     printWindow.document.write(html)
     printWindow.document.close()
 
-    // Wait a moment for content to load, then print
+    // Wait a moment for content to load, then focus
     setTimeout(() => {
       printWindow.focus()
-      printWindow.print()
-      printWindow.close()
     }, 500)
   }
 

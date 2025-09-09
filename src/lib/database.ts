@@ -448,13 +448,13 @@ class ConrodDatabase {
   }
 
   // Invoice CRUD methods
-  getAllInvoices(): (InvoiceRecord & { customerName: string, customerGstNo: string, customerPhoneNumber: string })[] {
+  getAllInvoices(): (InvoiceRecord & { customerName: string, customerGstNo: string, customerPhoneNumber: string, address: string })[] {
     const invoices = this.db.query(`
-      SELECT i.*, c.name as customerName, c.gstNo as customerGstNo, c.phoneNumber as customerPhoneNumber 
+      SELECT i.*, c.name as customerName, c.gstNo as customerGstNo, c.phoneNumber as customerPhoneNumber, c.address 
       FROM invoices i 
       JOIN customers c ON i.customerId = c.id 
       ORDER BY i.createdAt DESC
-    `).all() as (InvoiceRecord & { customerName: string, customerGstNo: string, customerPhoneNumber: string })[];
+    `).all() as (InvoiceRecord & { customerName: string, customerGstNo: string, customerPhoneNumber: string, address: string })[];
 
     // For each invoice, get its items
     const invoicesWithItems = invoices.map(invoice => {
