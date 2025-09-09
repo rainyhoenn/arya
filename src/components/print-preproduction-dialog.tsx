@@ -134,8 +134,8 @@ export function PrintPreProductionDialog({ items, children }: PrintPreProduction
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Size</th>
-                <th>Variant</th>
+                ${selectedType !== 'Conrod' ? '<th>Size</th>' : ''}
+                ${selectedType !== 'Conrod' ? '<th>Variant</th>' : ''}
                 <th>Quantity</th>
                 <th>Date Updated</th>
               </tr>
@@ -144,8 +144,8 @@ export function PrintPreProductionDialog({ items, children }: PrintPreProduction
               ${filteredItems.map(item => `
                 <tr>
                   <td>${item.name}</td>
-                  <td>${item.size || 'N/A'}</td>
-                  <td>${item.variant || 'N/A'}</td>
+                  ${selectedType !== 'Conrod' ? `<td>${item.size || 'N/A'}</td>` : ''}
+                  ${selectedType !== 'Conrod' ? `<td>${item.variant || 'N/A'}</td>` : ''}
                   <td class="quantity">${item.quantity.toLocaleString()}</td>
                   <td>${item.dateUpdated}</td>
                 </tr>

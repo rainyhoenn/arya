@@ -112,11 +112,13 @@ const getColumns = (
     cell: ({ row }) => {
       const item = row.original
       let typeDisplay = item.type
-      if (item.size) {
-        typeDisplay += ` (Size: ${item.size})`
-      }
-      if (item.variant) {
-        typeDisplay += ` (${item.variant})`
+      if (item.type !== "Conrod") {
+        if (item.size) {
+          typeDisplay += ` (Size: ${item.size})`
+        }
+        if (item.variant) {
+          typeDisplay += ` (${item.variant})`
+        }
       }
       return <div>{typeDisplay}</div>
     },
