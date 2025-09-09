@@ -29,6 +29,16 @@ export interface PreProductionRecord {
   createdAt: string;
 }
 
+export interface ConrodAssemblyRecord {
+  id: number;
+  name: string;
+  variant: string;
+  size: string;
+  quantity: number;
+  dateUpdated: string;
+  createdAt: string;
+}
+
 export interface CustomerRecord {
   id: number;
   name: string;
@@ -117,6 +127,19 @@ class ConrodDatabase {
       )
     `);
 
+    // Create conrod_assemblies table if it doesn't exist
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS conrod_assemblies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        variant TEXT NOT NULL,
+        size TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        dateUpdated TEXT NOT NULL,
+        createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Create customers table if it doesn't exist
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS customers (
@@ -134,6 +157,9 @@ class ConrodDatabase {
     
     // Migrate invoices table to add transport column
     this.migrateInvoicesTable();
+
+    // Migrate conrod assemblies from pre_production to conrod_assemblies table
+    this.migrateConrodAssemblies();
 
     // Create invoices table if it doesn't exist
     this.db.exec(`
@@ -249,6 +275,40 @@ class ConrodDatabase {
       }
     } catch (error) {
       console.error("Error during table migration:", error);
+    }
+  }
+
+  private migrateConrodAssemblies() {
+    try {
+      // Check if we need to migrate conrod assemblies from pre_production
+      const conrodAssemblies = this.db.query(
+        "SELECT * FROM pre_production WHERE type = 'Conrod'"
+      ).all() as PreProductionRecord[];
+
+      if (conrodAssemblies.length > 0) {
+        console.log(`Migrating ${conrodAssemblies.length} conrod assemblies to separate table`);
+        
+        for (const assembly of conrodAssemblies) {
+          // Insert into conrod_assemblies table
+          this.db.query(`
+            INSERT INTO conrod_assemblies (name, variant, size, quantity, dateUpdated, createdAt)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(
+            assembly.name,
+            assembly.variant || '',
+            assembly.size || '',
+            assembly.quantity,
+            assembly.dateUpdated,
+            assembly.createdAt
+          );
+        }
+
+        // Remove conrod assemblies from pre_production table
+        this.db.exec("DELETE FROM pre_production WHERE type = 'Conrod'");
+        console.log('Conrod assemblies migration completed');
+      }
+    } catch (error) {
+      console.error("Error during conrod assemblies migration:", error);
     }
   }
 
@@ -389,6 +449,74 @@ class ConrodDatabase {
 
   deletePreProductionItem(id: number): boolean {
     const deleteStmt = this.db.prepare("DELETE FROM pre_production WHERE id = ?");
+    const result = deleteStmt.run(id);
+    return result.changes > 0;
+  }
+
+  // Conrod Assembly CRUD methods
+  getAllConrodAssemblies(): ConrodAssemblyRecord[] {
+    return this.db.query("SELECT * FROM conrod_assemblies ORDER BY createdAt DESC").all() as ConrodAssemblyRecord[];
+  }
+
+  createConrodAssembly(assembly: Omit<ConrodAssemblyRecord, "id" | "createdAt">): ConrodAssemblyRecord {
+    const insertStmt = this.db.prepare(`
+      INSERT INTO conrod_assemblies (name, variant, size, quantity, dateUpdated)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const result = insertStmt.run(
+      assembly.name,
+      assembly.variant,
+      assembly.size,
+      assembly.quantity,
+      assembly.dateUpdated
+    );
+
+    return this.getConrodAssemblyById(result.lastInsertRowid as number)!;
+  }
+
+  getConrodAssemblyById(id: number): ConrodAssemblyRecord | null {
+    return this.db.query("SELECT * FROM conrod_assemblies WHERE id = ?").get(id) as ConrodAssemblyRecord | null;
+  }
+
+  updateConrodAssembly(id: number, assembly: Partial<Omit<ConrodAssemblyRecord, "id" | "createdAt">>): ConrodAssemblyRecord | null {
+    const fields = [];
+    const values = [];
+    
+    if (assembly.name !== undefined) {
+      fields.push("name = ?");
+      values.push(assembly.name);
+    }
+    if (assembly.variant !== undefined) {
+      fields.push("variant = ?");
+      values.push(assembly.variant);
+    }
+    if (assembly.size !== undefined) {
+      fields.push("size = ?");
+      values.push(assembly.size);
+    }
+    if (assembly.quantity !== undefined) {
+      fields.push("quantity = ?");
+      values.push(assembly.quantity);
+    }
+    if (assembly.dateUpdated !== undefined) {
+      fields.push("dateUpdated = ?");
+      values.push(assembly.dateUpdated);
+    }
+
+    if (fields.length === 0) {
+      return this.getConrodAssemblyById(id);
+    }
+
+    values.push(id);
+    const updateStmt = this.db.prepare(`UPDATE conrod_assemblies SET ${fields.join(", ")} WHERE id = ?`);
+    updateStmt.run(...values);
+    
+    return this.getConrodAssemblyById(id);
+  }
+
+  deleteConrodAssembly(id: number): boolean {
+    const deleteStmt = this.db.prepare("DELETE FROM conrod_assemblies WHERE id = ?");
     const result = deleteStmt.run(id);
     return result.changes > 0;
   }

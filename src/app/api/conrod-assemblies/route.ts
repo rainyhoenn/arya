@@ -3,9 +3,7 @@ import { conrodDB } from "@/lib/database";
 
 export async function GET() {
   try {
-    const items = conrodDB.getAllPreProductionItems();
-    // Filter for conrod assemblies (type "conrod")
-    const conrodAssemblies = items.filter(item => item.type === "Conrod");
+    const conrodAssemblies = conrodDB.getAllConrodAssemblies();
     return NextResponse.json({ success: true, data: conrodAssemblies });
   } catch (error) {
     console.error("Error fetching conrod assemblies:", error);
@@ -150,11 +148,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the assembly record
-    const newAssembly = conrodDB.createPreProductionItem({
+    const newAssembly = conrodDB.createConrodAssembly({
       name: conrodType,
-      type: "Conrod",
-      size,
       variant,
+      size,
       quantity: requestedQuantity,
       dateUpdated,
     });

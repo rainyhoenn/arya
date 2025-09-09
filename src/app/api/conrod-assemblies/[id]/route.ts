@@ -15,8 +15,8 @@ export async function GET(
       );
     }
 
-    const item = conrodDB.getPreProductionItemById(id);
-    if (!item || item.type !== "Conrod") {
+    const item = conrodDB.getConrodAssemblyById(id);
+    if (!item) {
       return NextResponse.json(
         { success: false, error: "Conrod assembly not found" },
         { status: 404 }
@@ -50,8 +50,8 @@ export async function PUT(
     const body = await request.json();
     
     // Get the original item for logging
-    const originalItem = conrodDB.getPreProductionItemById(id);
-    if (!originalItem || originalItem.type !== "Conrod") {
+    const originalItem = conrodDB.getConrodAssemblyById(id);
+    if (!originalItem) {
       return NextResponse.json(
         { success: false, error: "Conrod assembly not found" },
         { status: 404 }
@@ -61,7 +61,7 @@ export async function PUT(
     // Update the dateUpdated field to current date
     body.dateUpdated = new Date().toISOString().split('T')[0];
     
-    const updatedItem = conrodDB.updatePreProductionItem(id, body);
+    const updatedItem = conrodDB.updateConrodAssembly(id, body);
 
     if (!updatedItem) {
       return NextResponse.json(
@@ -113,8 +113,8 @@ export async function PATCH(
     const body = await request.json();
     
     // Get the original item for logging
-    const originalItem = conrodDB.getPreProductionItemById(id);
-    if (!originalItem || originalItem.type !== "Conrod") {
+    const originalItem = conrodDB.getConrodAssemblyById(id);
+    if (!originalItem) {
       return NextResponse.json(
         { success: false, error: "Conrod assembly not found" },
         { status: 404 }
@@ -124,7 +124,7 @@ export async function PATCH(
     // Update the dateUpdated field to current date
     body.dateUpdated = new Date().toISOString().split('T')[0];
     
-    const updatedItem = conrodDB.updatePreProductionItem(id, body);
+    const updatedItem = conrodDB.updateConrodAssembly(id, body);
 
     if (!updatedItem) {
       return NextResponse.json(
@@ -174,15 +174,15 @@ export async function DELETE(
     }
 
     // Get the item before deleting for logging
-    const itemToDelete = conrodDB.getPreProductionItemById(id);
-    if (!itemToDelete || itemToDelete.type !== "Conrod") {
+    const itemToDelete = conrodDB.getConrodAssemblyById(id);
+    if (!itemToDelete) {
       return NextResponse.json(
         { success: false, error: "Conrod assembly not found" },
         { status: 404 }
       );
     }
 
-    const deleted = conrodDB.deletePreProductionItem(id);
+    const deleted = conrodDB.deleteConrodAssembly(id);
     if (!deleted) {
       return NextResponse.json(
         { success: false, error: "Failed to delete conrod assembly" },
